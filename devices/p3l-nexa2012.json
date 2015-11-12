@@ -1,0 +1,171 @@
+{ "device": {
+
+    "name":     "Radio Shack Indoor/Outdoor Wireless Temperature Sensor (Cat. #6300769)",
+    "num_bits": 36,
+    
+    "states": [
+        {
+            "name":         "reset",
+            "timeout_us":   0,
+
+            "triggers": [
+                {
+                    "condition": "always",
+                    "state":     "idle"
+                }
+            ]
+        },
+
+        {
+            "name":         "idle",
+            "timeout_us":   0,
+
+            "triggers": [
+                {
+                    "condition": "pulse_start",
+                    "state":     "initial_bit_pulse"
+                }
+            ]
+        },
+
+        {
+            "name":         "initial_bit_pulse",
+            "duration_us":  500,
+            "timeout_us":   1500,
+
+            "triggers": [
+                {
+                    "condition":    "pulse_end",
+                    "state":        "initial_off_time"
+                },
+
+                {
+                    "condition":    "timeout",
+                    "state":        "reset"
+                }
+            ]
+
+        },
+
+
+        {
+            "name":         "initial_off_time",
+            "duration_us":  8700,
+            "timeout_us":   16400,
+
+            "triggers": [
+                {
+                    "condition":    "pulse_start",
+                    "state":        "bit_pulse"
+                },
+                {
+                    "condition":    "timeout",
+                    "state":        "reset"
+                }
+            ]
+        },
+
+        {
+            "name":         "bit_pulse",
+            "duration_us":  500,
+            "timeout_us":   1000,
+
+            "triggers": [
+                {
+                    "condition":    "msg_complete",
+                    "state":        "reset",
+                    "action":       "output_data",
+
+                    "comment":      "This occurs when # received bits == max_bits"
+                },
+
+                {
+                    "condition":    "pulse_end",
+                    "state":        "bit_off_time"
+                },
+
+                {
+                    "condition":    "timeout",
+                    "state":        "reset"
+                }
+            ]
+
+        },
+
+        {
+            "name":         "bit_off_time",
+            "duration_us":  0,
+            "timeout_us":   6000,
+
+            "triggers": [
+                {
+                    "condition":    "pulse_start",
+                    "duration_us":  2000,
+                    "state":        "bit_pulse",
+                    "action":       "append_0"
+                },
+
+                {
+                    "condition":    "pulse_start",
+                    "duration_us":  4000,
+                    "state":        "bit_pulse",
+                    "action":       "append_1"
+                },
+
+                {
+                    "condition":    "timeout",
+                    "state":        "reset"
+                }
+            ]
+        }
+    ],
+
+    "fields": [
+        {
+            "name":         "Preamble",
+            "default":      "0x27",
+            "start_bit":    0,
+            "end_bit":      5,
+            "endianness":   "big",
+            "format":       "hex"
+        },
+
+        {   
+            "name":         "Unknown-1",
+            "default":      "0xd5",
+            "start_bit":    6,
+            "end_bit":      13,
+            "endianness":   "big",
+            "format":       "hex"
+        },
+
+        {
+            "name":         "Channel",
+            "default":      "1",
+            "start_bit":    14,
+            "end_bit":      15,
+            "endianness":   "big",
+            "format":       "two's complement",
+            "offset":       1
+        },
+
+        {
+            "name":         "Temperature (C)",
+            "default":      "56.5",
+            "start_bit":    16,
+            "end_bit":      27,
+            "endianness":   "big",
+            "format":       "float",
+            "scaling":      0.1
+        },
+
+        {
+            "name":         "Unknown-2",
+            "default":      "0",
+            "start_bit":    28,
+            "end_bit":      35,
+            "endianness":   "big",
+            "format":       "hex"
+        }
+    ]
+}}

@@ -1,0 +1,9 @@
+{ "filter": {
+    "comment": "This filter is intended only for testing.",
+
+    "stages": [
+        {
+            "taps": [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ]
+        }
+    ]
+}}
