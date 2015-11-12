@@ -225,8 +225,6 @@ int sdr_bladerf_rx(void *dev, struct complexf *samples, unsigned int count)
     while (status == 0 && total_read < count) {
         to_read = uint_min(sdr->buf_len, count - total_read);
 
-        log_verbose("RX'ing %u samples...\n", to_read);
-
         status = bladerf_sync_rx(sdr->handle, sdr->buf, to_read,
                                  NULL, sdr->timeout_ms);
 
@@ -256,8 +254,6 @@ int sdr_bladerf_tx(void *dev, struct complexf *samples, unsigned int count)
         to_write = uint_min(sdr->buf_len, count - total_written);
 
         complexf_to_sc16q11(samples, sdr->buf, to_write);
-
-        log_verbose("TX'ing %u samples...\n", to_write);
 
         status = bladerf_sync_tx(sdr->handle, sdr->buf, to_write,
                                  NULL, sdr->timeout_ms);
