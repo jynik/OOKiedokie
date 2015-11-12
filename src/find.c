@@ -215,14 +215,14 @@ FILE *find_filter_file(const char *name)
 
     /* Same, but extension not provided. (This makes sense in the case
      * where the the file is in the current working directory). */
-    ret = find_file("r", NULL, name, ".filter");
+    ret = find_file("r", NULL, name, ".json");
     if (!ret) {
-        ret = find_file("r", "filters/", name, ".filter");
+        ret = find_file("r", "filters/", name, ".json");
     }
 
     /* Search by name within search paths */
     if (!ret) {
-        ret = find_file("r", "filters/", name, ".filter");
+        ret = find_file("r", "filters/", name, ".json");
     }
 
     return ret;
