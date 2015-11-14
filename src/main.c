@@ -230,13 +230,14 @@ static int get_rx_recorder(struct ookiedokie_cfg *cfg, char *arg)
 static int validate_cfg(struct ookiedokie_cfg *cfg)
 {
     int status = 0;
-    const bool have_device = (cfg->device != NULL);
-    const bool have_rx_rec = (cfg->rx_rec_filename != NULL &&
-                              cfg->rx_rec_type     != NULL);
+    const bool have_device      = (cfg->device != NULL);
+    const bool have_rx_filter   = (cfg->rx_filter != NULL);
+    const bool have_rx_rec      = (cfg->rx_rec_filename != NULL &&
+                                   cfg->rx_rec_type     != NULL);
 
     switch (cfg->direction) {
         case DIRECTION_RX:
-            if (!cfg->device && (!cfg->rx_rec_filename || !cfg->rx_rec_type)) {
+            if (!cfg->device && !have_rx_rec) {
                 fprintf(stderr, "Error: Either a target device or "
                                 "recording parameters must be specified.\n");
                 return -1;
@@ -245,13 +246,13 @@ static int validate_cfg(struct ookiedokie_cfg *cfg)
             break;
 
         case DIRECTION_TX:
-            if (!cfg->device) {
+            if (!have_device) {
                 status = -1;
                 fprintf(stderr, "Error: A target device must be specified.\n");
-            } else if (cfg->rx_rec_filename || cfg->rx_rec_type) {
+            } else if (have_rx_rec) {
                 status = -1;
                 fprintf(stderr, "Error: --rx-rec cannot be specified with --tx\n");
-            } else if (cfg->rx_filter != NULL) {
+            } else if (have_rx_filter) {
                 status = -1;
                 fprintf(stderr, "Error: --rx-filter cannot be used with --tx.\n");
             }
