@@ -196,9 +196,7 @@ FILE * find_device_file(const char *device)
     }
 
     /* Search by name within search paths */
-    if (!ret) {
-        ret = find_file("r", "devices/", device, ".json");
-    }
+    ret = find_file("r", "devices/", device, ".json");
 
     return ret;
 }
@@ -216,14 +214,12 @@ FILE *find_filter_file(const char *name)
     /* Same, but extension not provided. (This makes sense in the case
      * where the the file is in the current working directory). */
     ret = find_file("r", NULL, name, ".json");
-    if (!ret) {
-        ret = find_file("r", "filters/", name, ".json");
+    if (ret) {
+        return ret;
     }
 
     /* Search by name within search paths */
-    if (!ret) {
-        ret = find_file("r", "filters/", name, ".json");
-    }
+    ret = find_file("r", "filters/", name, ".json");
 
     return ret;
 }
