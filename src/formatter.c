@@ -468,7 +468,6 @@ static void apply_field_bits(const struct formatter_field *f,
 {
     unsigned int i, b;
     uint64_t src_bit;
-    const unsigned int field_width = get_width(f);
 
     if (f->endianness == FORMATTER_ENDIAN_BIG) {
         src_bit = f->end_bit - f->start_bit;
