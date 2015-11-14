@@ -151,7 +151,8 @@ static void record_dig(struct rx *rx, unsigned int count)
     }
 }
 
-static inline void threshold(struct rx *rx, unsigned int count)
+static inline void threshold(struct rx *rx,
+                             struct complexf *input, unsigned int count)
 {
     unsigned int i;
 
@@ -178,7 +179,7 @@ int ookiedokie_rx(struct sdr *sdr, struct fir_filter *filter,
     while (g_running) {
         unsigned int i;
         size_t count;
-        struct complexf *samples;
+        struct complexf *to_threshold;
 
         status = sdr_rx(sdr, rx->samples, num_samples);
         if (status != 0) {
@@ -193,12 +194,12 @@ int ookiedokie_rx(struct sdr *sdr, struct fir_filter *filter,
         }
 
         if (filter) {
-            samples = rx->post_filter;
+            to_threshold = rx->post_filter;
             count = fir_filter_and_decimate(filter, rx->samples, num_samples,
                                             rx->post_filter);
 
         } else {
-            samples = rx->samples;
+            to_threshold = rx->samples;
             count = num_samples;
         }
 
@@ -210,7 +211,7 @@ int ookiedokie_rx(struct sdr *sdr, struct fir_filter *filter,
         }
 
         if (device || rx->dig_out) {
-            threshold(rx, count);
+            threshold(rx, to_threshold, count);
         }
 
         if (rx->dig_out) {
