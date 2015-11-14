@@ -183,7 +183,7 @@ static spt str_to_spt(const struct formatter_field *field,
         case FORMATTER_FMT_FLOAT: {
             float tmp = (float) str2double(str, -DBL_MAX, DBL_MAX, &conv_ok);
             if (!conv_ok) {
-                break;
+                goto inval;
             }
 
             value = spt_from_float((float) tmp, field->scaling, field->offset);
