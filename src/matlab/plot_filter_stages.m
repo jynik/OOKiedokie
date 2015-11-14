@@ -1,6 +1,6 @@
 % PLOT_FILTER_STAGES Plot the response of repeated decimating filter stages
 %
-% [Fs_out, stages] = plot_stages(taps, Fs, decimation, num_stages)
+% [Fs_out, stages] = plot_stages(taps, decimation, num_stages, Fs)
 %
 % Arguments:
 %   taps            Filter taps
