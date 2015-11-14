@@ -73,6 +73,8 @@
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
+#define DISABLE_FILTER          ((void *) -1)
+
 static const struct numeric_suffix hz_suffixes[] = {
     { "K",   1000 },
     { "KHz", 1000 },
@@ -366,6 +368,8 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
                 if (cfg->rx_filter != NULL) {
                     fprintf(stderr, "Error: RX filter already specified.\n");
                     return -1;
+                } else if (!strcasecmp("none", optarg)) {
+                    cfg->rx_filter = DISABLE_FILTER;
                 } else {
                     cfg->rx_filter = strdup(optarg);
                     if (!cfg->rx_filter) {
@@ -570,14 +574,31 @@ int main(int argc, char *argv[])
 
     /* RX filter */
     if (cfg.rx_filter != NULL) {
-        filter = fir_init(cfg.rx_filter, cfg.samples_per_buffer);
-        if (!filter) {
-            status = EXIT_FAILURE;
-            goto out;
+        if (cfg.rx_filter == DISABLE_FILTER) {
+            /* User has opted out of using any default filter for the
+             * selected SDR. */
+            cfg.rx_filter = NULL;
+        } else {
+            filter = fir_init(cfg.rx_filter, cfg.samples_per_buffer);
+            if (!filter) {
+                status = EXIT_FAILURE;
+                goto out;
+            }
+        }
+    } else if (cfg.direction == DIRECTION_RX) {
+        const char *default_filter = sdr_default_filter(sdr);
+
+        if (default_filter) {
+            filter = fir_init(default_filter, cfg.samples_per_buffer);
         }
 
-    } else if (cfg.direction == DIRECTION_RX) {
-        /* Try to use a default filter */
+        if (filter == NULL) {
+            log_warning("No default filter found for %s. "
+                        "No filter is being used.\n", cfg.sdr_type);
+        } else {
+            log_verbose("Using default filter for %s: %s\n",
+                        cfg.sdr_type, default_filter);
+        }
     }
 
     /* Force any file recording to occur pre-filter */

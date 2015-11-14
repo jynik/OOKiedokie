@@ -55,7 +55,7 @@
 #if ENABLE_BLADERF
 #   undef NO_DEVICES_ENABLED
 #   define SDR_BLADERF \
-        SDR_INTERFACE(bladerf, SDR_HARDWARE, "fs512_fs64_dec32"),
+        SDR_INTERFACE(bladerf, SDR_HARDWARE, "fs32_fs4"),
 
     SDR_PROTOTYPES(bladerf);
 #else
@@ -65,7 +65,7 @@
 #if ENABLE_BLADERF_SC16Q11_FILE
 #   undef NO_DEVICES_ENABLED
 #   define SDR_BLADERF_SC16Q11_FILE \
-        SDR_INTERFACE(bladerf_file, SDR_FILE_HANDLER,"fs512_fs64_dec32"),
+        SDR_INTERFACE(bladerf_file, SDR_FILE_HANDLER,"fs32_fs4"),
 
     SDR_PROTOTYPES(bladerf_file);
 #else
