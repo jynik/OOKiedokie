@@ -157,7 +157,7 @@ static inline void threshold(struct rx *rx,
     unsigned int i;
 
     for (i = 0; i < count; i++) {
-        rx->digital[i] = complexf_power(&input[i]) >= (THRESHOLD * THRESHOLD);
+        rx->digital[i] = complexf_magnitude(&input[i]) >= THRESHOLD;
     }
 }
 
