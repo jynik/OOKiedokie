@@ -603,7 +603,7 @@ int main(int argc, char *argv[])
     }
 
     /* Force any file recording to occur pre-filter */
-    if (cfg.rx_filter == NULL) {
+    if (filter == NULL) {
         cfg.rx_rec_input = true;
     }
 
