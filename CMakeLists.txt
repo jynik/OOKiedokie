@@ -62,10 +62,14 @@ if(NOT DEFINED OOKIEDOKIE_BIN_DIR)
 endif()
 set(OOKIEDOKIE_BIN_DIR ${OOKIEDOKIE_BIN_DIR} CACHE string "Directory under install prefix to install ookiedokie binary")
 
+
 if(NOT DEFINED OOKIEDOKIE_DATA_DIR)
     set(OOKIEDOKIE_DATA_DIR share/OOKiedokie)
 endif()
 set(OOKIEDOKIE_DATA_DIR ${OOKIEDOKIE_DATA_DIR} CACHE string "Directory under install prefix to install auxillary files, such as device specification files")
+
+message(STATUS "OOKIEDOKIE_BIN_DIR set to ${CMAKE_INSTALL_PREFIX}/${OOKIEDOKIE_BIN_DIR}")
+message(STATUS "OOKIEDOKIE_DATA_DIR set to ${CMAKE_INSTALL_PREFIX}/${OOKIEDOKIE_DATA_DIR}\n")
 
 ################################################################################
 # ookiedokie Build
@@ -97,7 +101,7 @@ set(OOKIEDOKIE_LIBS
         m
 )
 
-add_definitions("-DOOKIEDOKIE_DATA_DIR=\"${CMAKE_INSTALL_PREFIX}/share/ookiedokie/\"")
+add_definitions("-DOOKIEDOKIE_DATA_DIR=\"${CMAKE_INSTALL_PREFIX}/${OOKIEDOKIE_DATA_DIR}/\"")
 
 if(ENABLE_BLADERF_SC16Q11_FILE)
     add_definitions("-DENABLE_BLADERF_SC16Q11_FILE=1")
