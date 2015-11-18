@@ -140,11 +140,13 @@ static void usage(const char *argv0)
     printf("                                the full path or just name for filter files\n");
     printf("                                in the OOKiedokie search path.\n");
     printf("  -B, --rx-rec-dig <filename>   Save digital signal to a CSV of binary values,\n");
-    printf("                                as specified by <filename>\n.");
-    printf("  -R, --rx-rec <SDR type>,<file>\n");
-    printf("                                Record RX'd samples to specified file using\n");
-    printf("                                <SDR type>, which must be one of the available\n");
-    printf("                                file-based implementations.\n");
+    printf("                                as specified by <filename>.\n");
+    printf("  -R, --rx-rec [SDR type,]<file>\n");
+    printf("                                Record RX'd samples to specified file.\n");
+    printf("                                [SDR type], which must be one of the available\n");
+    printf("                                file-based implementations, may be specified to\n");
+    printf("                                record samples using a format different from the\n");
+    printf("                                defaults of the device specified via --rx.\n");
     printf("\n");
     printf("  --rx-rec-input                Specifies that --rx-rec should record raw input\n");
     printf("                                rather than filtered samples.\n");
@@ -205,23 +207,26 @@ static int get_rx_recorder(struct ookiedokie_cfg *cfg, char *arg)
     }
 
     sep = strchr(arg, ',');
-    if (!sep) {
-        fprintf(stderr, "Error: RX recording must be specified as <SDR type>:<filename>\n");
-        return -1;
-    }
+    if (sep) {
+        *sep = '\0';
 
-    *sep = '\0';
+        cfg->rx_rec_filename = strdup(sep + 1);
+        if (!cfg->rx_rec_filename) {
+            perror("strdup");
+            return -1;
+        }
 
-    cfg->rx_rec_type = strdup(arg);
-    if (!cfg->rx_rec_type) {
-        perror("strdup");
-        return -1;
-    }
-
-    cfg->rx_rec_filename = strdup(sep + 1);
-    if (!cfg->rx_rec_filename) {
-        perror("strdup");
-        return -1;
+        cfg->rx_rec_type = strdup(arg);
+        if (!cfg->rx_rec_type) {
+            perror("strdup");
+            return -1;
+        }
+    } else {
+        cfg->rx_rec_filename = strdup(arg);
+        if (!cfg->rx_rec_filename) {
+            perror("strdup");
+            return -1;
+        }
     }
 
     return 0;
@@ -232,8 +237,7 @@ static int validate_cfg(struct ookiedokie_cfg *cfg)
     int status = 0;
     const bool have_device      = (cfg->device != NULL);
     const bool have_rx_filter   = (cfg->rx_filter != NULL);
-    const bool have_rx_rec      = (cfg->rx_rec_filename != NULL &&
-                                   cfg->rx_rec_type     != NULL);
+    const bool have_rx_rec      = (cfg->rx_rec_filename != NULL);
 
     switch (cfg->direction) {
         case DIRECTION_RX:
@@ -557,11 +561,19 @@ int main(int argc, char *argv[])
     }
 
     /* RX recorder setup */
-    if ((cfg.rx_rec_filename != NULL) && (cfg.rx_rec_type != NULL)) {
+    if (cfg.rx_rec_filename != NULL) {
         struct ookiedokie_cfg rec_cfg;
 
+        /* Use default file handler to record samples */
+        if (cfg.rx_rec_type == NULL) {
+            /* FIXME: Having to cast here is gross. There's no need to ever
+             * change these strings...they should be const. */
+            rec_cfg.sdr_type = (char *) sdr_default_file_handler(sdr);
+        } else {
+            rec_cfg.sdr_type = cfg.rx_rec_type;
+        }
+
         rec_cfg.direction = DIRECTION_TX;
-        rec_cfg.sdr_type = cfg.rx_rec_type;
         rec_cfg.sdr_args = cfg.rx_rec_filename;
         rec_cfg.samples_per_buffer = cfg.samples_per_buffer;
 
