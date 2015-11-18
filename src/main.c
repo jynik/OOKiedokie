@@ -566,9 +566,7 @@ int main(int argc, char *argv[])
 
         /* Use default file handler to record samples */
         if (cfg.rx_rec_type == NULL) {
-            /* FIXME: Having to cast here is gross. There's no need to ever
-             * change these strings...they should be const. */
-            rec_cfg.sdr_type = (char *) sdr_default_file_handler(sdr);
+            rec_cfg.sdr_type = sdr_default_file_handler(sdr);
         } else {
             rec_cfg.sdr_type = cfg.rx_rec_type;
         }

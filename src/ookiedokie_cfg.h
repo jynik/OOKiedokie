@@ -35,18 +35,18 @@ enum ookiedokie_dir {
 struct ookiedokie_cfg {
 
     /* Required config */
-    char *sdr_type;
+    const char *sdr_type;
     enum ookiedokie_dir direction;
 
     /* SDR config */
-    char *sdr_args;
+    const char *sdr_args;
     unsigned int frequency;
     unsigned int bandwidth;
     unsigned int samplerate;
     int gain;
 
     /* Target device */
-    char *device;
+    const char *device;
 
     /* Transmit options */
     unsigned int tx_count;
@@ -54,10 +54,10 @@ struct ookiedokie_cfg {
     struct keyval_list *device_params;
 
     /* Receive options */
-    char *rx_rec_filename;
-    char *rx_rec_type;
-    char *rx_filter;
-    char *rx_rec_dig;
+    const char *rx_rec_filename;
+    const char *rx_rec_type;
+    const char *rx_filter;
+    const char *rx_rec_dig;
     bool rx_rec_input; /* Else record post-filter */
 
     /* Stream config */

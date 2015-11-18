@@ -85,12 +85,12 @@ int ookiedokie_cfg_init(struct ookiedokie_cfg *c)
 
 void ookiedokie_cfg_deinit(struct ookiedokie_cfg *c)
 {
-    free(c->device);
+    free((void*) c->device);
     keyval_list_deinit(c->device_params);
-    free(c->rx_rec_filename);
-    free(c->rx_rec_type);
-    free(c->rx_filter);
-    free(c->rx_rec_dig);
-    free(c->sdr_args);
-    free(c->sdr_type);
+    free((void*) c->rx_rec_filename);
+    free((void*) c->rx_rec_type);
+    free((void*) c->rx_filter);
+    free((void*) c->rx_rec_dig);
+    free((void*) c->sdr_args);
+    free((void*) c->sdr_type);
 }
