@@ -96,6 +96,24 @@ int sdr_flush_tx(struct sdr *dev);
 const char *sdr_default_filter(struct sdr *dev);
 
 /**
+ * Get the default file handler implemenation associated with this device
+ *
+ * @param[in]   dev         SDR handle
+ *
+ * @return Default SDR file handler implementation
+ */
+const char * sdr_default_file_handler(const struct sdr *dev);
+
+/**
+ * Check if SDR device is a "file handler" rather than an implementation
+ * that interacts with hardware.
+ *
+ * @return true if the specified device is a file handler implemenation,
+ *         false otherwise
+ */
+bool sdr_is_filehandler(const struct sdr *dev);
+
+/**
  * Close and deinitialize a device.
  *
  * @param[in]   dev     SDR handle

@@ -52,8 +52,14 @@ struct sdr_interface
     /** SDR name */
     const char *name;
 
-    /** Denotes this reads/writes sample files and is not actual hardware */
-    const bool is_file_handler;
+    /**
+     * Name of the default file format handler to use when recording
+     * samples or writing TX samples to a file (to be compatible with this
+     * device.)
+     *
+     * If the implementation is a file handler, this should be set to itself.
+     */
+    const char *file_handler;
 
     /**
      * Default filter file.
@@ -122,6 +128,11 @@ struct sdr {
 
 static const struct sdr_interface sdrs[] = SDR_SUPPORTED_DEVICES;
 
+static inline bool iface_is_file_handler(const struct sdr_interface *iface)
+{
+    return !strcmp(iface->name, iface->file_handler);
+}
+
 struct sdr * sdr_init(const struct ookiedokie_cfg *config, bool file_only)
 {
     size_t i;
@@ -135,7 +146,7 @@ struct sdr * sdr_init(const struct ookiedokie_cfg *config, bool file_only)
     }
 
     for (i = 0; i < ARRAY_SIZE(sdrs); i++) {
-        if (file_only && !sdrs[i].is_file_handler) {
+        if (file_only && !iface_is_file_handler(&sdrs[i])) {
             continue;
         }
 
@@ -143,7 +154,7 @@ struct sdr * sdr_init(const struct ookiedokie_cfg *config, bool file_only)
             log_verbose("Specified device type: %s\n", config->sdr_type);
             ret->iface = &sdrs[i];
 
-            if (ret->iface->is_file_handler && config->sdr_args == NULL) {
+            if (iface_is_file_handler(ret->iface) && config->sdr_args == NULL) {
                 log_error("A filename must be provided as \"SDR args\" when using %s.\n",
                           config->sdr_type);
                 free(ret);
@@ -195,3 +206,12 @@ const char * sdr_default_filter(struct sdr *dev)
     return dev->iface->default_filter;
 }
 
+const char * sdr_default_file_handler(const struct sdr *dev)
+{
+    return dev->iface->file_handler;
+}
+
+bool sdr_is_filehandler(const struct sdr *dev)
+{
+    return iface_is_file_handler(dev->iface);
+}

@@ -27,9 +27,6 @@
 #include "complexf.h"
 #include "sdr/sdr.h"
 
-#define SDR_FILE_HANDLER true
-#define SDR_HARDWARE     false
-
 #define NO_FILTER NULL
 
 #define SDR_PROTOTYPES(name) \
@@ -39,9 +36,9 @@
     int sdr_##name##_tx(void *, const struct complexf *, unsigned int); \
     int sdr_##name##_flush(void *) \
 
-#define SDR_INTERFACE(name_, is_file_handler_, filter_) { \
+#define SDR_INTERFACE(name_, file_handler_, filter_) { \
     .name               = #name_, \
-    .is_file_handler    = is_file_handler_, \
+    .file_handler       = #file_handler_, \
     .default_filter     = filter_, \
     .init               = sdr_##name_##_init, \
     .deinit             = sdr_##name_##_deinit, \
@@ -55,7 +52,7 @@
 #if ENABLE_BLADERF
 #   undef NO_DEVICES_ENABLED
 #   define SDR_BLADERF \
-        SDR_INTERFACE(bladerf, SDR_HARDWARE, "fs128_fs16_dec4"),
+        SDR_INTERFACE(bladerf, bladerf_file, "fs128_fs16_dec4"),
 
     SDR_PROTOTYPES(bladerf);
 #else
@@ -65,11 +62,11 @@
 #if ENABLE_BLADERF_SC16Q11_FILE
 #   undef NO_DEVICES_ENABLED
 #   define SDR_BLADERF_SC16Q11_FILE \
-        SDR_INTERFACE(bladerf_file, SDR_FILE_HANDLER, "fs128_fs16_dec4"),
+        SDR_INTERFACE(bladerf_file, bladerf_file, "fs128_fs16_dec4"),
 
     SDR_PROTOTYPES(bladerf_file);
 #else
-    #define SDR_BLADERF_SC16Q11_FILE
+#   define SDR_BLADERF_SC16Q11_FILE
 #endif
 
 #ifdef NO_DEVICES_ENABLED
