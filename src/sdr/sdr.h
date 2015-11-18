@@ -93,7 +93,7 @@ int sdr_flush_tx(struct sdr *dev);
  *
  * @return  Filter file name
  */
-const char *sdr_default_filter(struct sdr *dev);
+const char * sdr_default_filter(const struct sdr *dev);
 
 /**
  * Get the default file handler implemenation associated with this device

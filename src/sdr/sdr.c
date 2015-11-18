@@ -201,7 +201,7 @@ int sdr_flush_tx(struct sdr *dev)
     return dev->iface->flush(dev->handle);
 }
 
-const char * sdr_default_filter(struct sdr *dev)
+const char * sdr_default_filter(const struct sdr *dev)
 {
     return dev->iface->default_filter;
 }
