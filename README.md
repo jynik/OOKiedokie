@@ -14,6 +14,10 @@ The objectives of this project are:
 * Remain lightweight with minimal dependencies
 * Provide a simple command-line interface for use in scripts
 
+## Supported Hardware and File Formats ##
+ * [Nuand bladeRF](https://www.nuand.com)
+ * bladeRF binary SC16Q11 format (used by bladeRF-cli)
+
 ## Dependencies ##
 
 **Required:**
@@ -23,11 +27,7 @@ The objectives of this project are:
 **Optional:**
 
  * [libbladeRF](https://github.com/nuand/bladeRF) (for [bladeRF](https://www.nuand.com) support)
-
-## Features ##
-
-*TO DO*: Document features that satisfy the aforementioned objectives
-
+ 
 ## Documentation ##
 
 *TO DO*: Create and link to documents regarding usage, examples, and development
