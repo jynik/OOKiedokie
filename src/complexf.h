@@ -25,21 +25,46 @@
 
 #include <math.h>
 
+/**
+ * Simple complex number representation
+ */
 struct complexf {
-    float real;
-    float imag;
+    float real; /** Real component */
+    float imag; /** Imaginary component */
 };
 
+/**
+ * Compute power of provided complex value
+ *
+ * @param x Complex value
+ *
+ * @return power
+ */
 static inline float complexf_power(const struct complexf *x)
 {
     return x->real * x->real + x->imag * x->imag;
 }
 
+/**
+ * Compute the magnitude of the provided complex value
+ *
+ * @param x Complex value
+ *
+ * @return magnitude
+ */
 static inline float complexf_magnitude(const struct complexf *x)
 {
     return sqrtf(complexf_power(x));
 }
 
+/**
+ * Convert an array of SC16Q11 values (bladeRF ADC/DAC format) to
+ * complexf values.
+ *
+ * @param[in    in      Input  SC16Q11 values (interleaved IQ)
+ * @param[out]  out     Output complex f values.
+ * @param[in]   n       Length of both `in` and `out`
+ */
 static inline void sc16q11_to_complexf(const int16_t *in,
                                        struct complexf *out, unsigned int n)
 {
@@ -51,6 +76,14 @@ static inline void sc16q11_to_complexf(const int16_t *in,
     }
 }
 
+/**
+ * Convert an array of complexf values to SC16Q11
+ * values (bladeRF ADC/DAC format)
+ *
+ * @param[in    in      Input SC16Q11 values (interleaved IQ)
+ * @param[out]  out     Output complex f values.
+ * @param[in]   n       Length of both `in` and `out`
+ */
 static inline void complexf_to_sc16q11(const struct complexf *in,
                                        int16_t *out, unsigned int n)
 {
