@@ -7,7 +7,6 @@
     "states": [
         {
             "name":         "reset",
-            "timeout_us":   0,
 
             "triggers": [
                 {
@@ -19,7 +18,6 @@
 
         {
             "name":         "idle",
-            "timeout_us":   0,
 
             "triggers": [
                 {
@@ -45,9 +43,7 @@
                     "state":        "reset"
                 }
             ]
-
         },
-
 
         {
             "name":         "initial_off_time",
@@ -95,7 +91,6 @@
 
         {
             "name":         "bit_off_time",
-            "duration_us":  0,
             "timeout_us":   6000,
 
             "triggers": [
