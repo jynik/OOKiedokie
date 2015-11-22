@@ -26,52 +26,73 @@
 #include <stdbool.h>
 #include "log.h"
 
+/**
+ * Direction to operate OOKiedokie in
+ */
 enum ookiedokie_dir {
-    DIRECTION_INVALID = -1,
-    DIRECTION_RX,
-    DIRECTION_TX,
+    DIRECTION_INVALID = -1, /**< Default "uninitialized" value */
+    DIRECTION_RX,           /**< Receive samples */
+    DIRECTION_TX,           /**< Transmit samples */
 };
 
+/**
+ * Runtime configuration parameters
+ */
 struct ookiedokie_cfg {
 
     /* Required config */
-    const char *sdr_type;
-    enum ookiedokie_dir direction;
+    const char *sdr_type;           /**< Type of SDR or file format to use */
+    enum ookiedokie_dir direction;  /**< Direction to operate in */
 
     /* SDR config */
-    const char *sdr_args;
-    unsigned int frequency;
-    unsigned int bandwidth;
-    unsigned int samplerate;
-    int gain;
+    const char *sdr_args;           /**< SDR-specific arguments */
+    unsigned int frequency;         /**< SDR frequency, in Hz */
+    unsigned int bandwidth;         /**< SDR filter BW, in Hz */
+    unsigned int samplerate;        /**< SDR sample rate, in Hz */
+    int gain;                       /**< SDR-specific gain value */
 
     /* Target device */
-    const char *device;
+    const char *device;             /**< Name of target OOK device */
 
     /* Transmit options */
-    unsigned int tx_count;
-    unsigned int tx_delay_us;
-    struct keyval_list *device_params;
+    unsigned int tx_count;          /**< Number of times to re-transmit msg */
+    unsigned int tx_delay_us;       /**< Intra-repeat delay, in microseconds */
+    struct keyval_list *device_params; /**< Message field parameters */
 
     /* Receive options */
-    const char *rx_rec_filename;
-    const char *rx_rec_type;
-    const char *rx_filter;
-    const char *rx_rec_dig;
-    bool rx_rec_input; /* Else record post-filter */
+    const char *rx_rec_filename;    /**< Filename to record samples to */
+    const char *rx_rec_type;        /**< File format type to record with */
+    const char *rx_filter;          /**< Filename of RX filter to user */
+    const char *rx_rec_dig;         /**< Filename to record digital samples to */
+    bool rx_rec_input;              /**< If true, record pre-filtered input,
+                                     *   otherwise record post-filtered
+                                     *   samples. */
 
-    /* Stream config */
-    unsigned int samples_per_buffer;
-    unsigned int num_buffers;
-    unsigned int num_transfers;
-    unsigned int stream_timeout_ms;
-    unsigned int sync_timeout_ms;
+    /* Stream config - specific to SDR stream implementation  */
+    unsigned int samples_per_buffer;    /**< # Samples per buffer */
+    unsigned int num_buffers;           /**< Total # of buffers to use */
+    unsigned int num_transfers;         /**< Max # of in-flight transfers */
+    unsigned int stream_timeout_ms;     /**< Stream timeout, in milliseconds */
+    unsigned int sync_timeout_ms;       /**< Millisecond timeout per RX/TX */
 
     /* Other */
-    enum log_level verbosity;
+    enum log_level verbosity;           /**< Output verbosity level */
 };
 
+/**
+ * Initialize the provided configuration to default values.
+ *
+ * @param   cfg     Runtime-configuration to initialize
+ *
+ * @return 0 on success, non-zero on failure
+ */
 int ookiedokie_cfg_init(struct ookiedokie_cfg *cfg);
+
+/**
+ * Deinitialize and deallocate fields in the provided runtime configuration.
+ *
+ * @param   cfg     Runtime configuration to deinitialize
+ */
 void ookiedokie_cfg_deinit(struct ookiedokie_cfg *cfg);
 
 #endif
