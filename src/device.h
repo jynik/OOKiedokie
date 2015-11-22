@@ -59,7 +59,7 @@ struct device * device_init(const char *name, unsigned int sample_rate);
  *         called.
  */
 const struct keyval_list * device_process(struct device *d,
-                                          bool *data, unsigned int count);
+                                          const bool *data, unsigned int count);
 
 /**
  * Generate complex samples for a single message

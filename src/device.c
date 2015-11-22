@@ -547,7 +547,7 @@ out:
 }
 
 const struct keyval_list * device_process(struct device *d,
-                                          bool *data, unsigned int count)
+                                          const bool *data, unsigned int count)
 {
     unsigned int total_proc, num_proc;
     enum sm_process_result proc = SM_PROCESS_RESULT_NO_OUTPUT;

@@ -170,7 +170,7 @@ bool sm_initialized(struct state_machine *sm);
  *       will be set to <= count; you many need to call this function again
  *       with &data[num_processed], (count - *num_processed).
  */
-enum sm_process_result sm_process(struct state_machine *sm, bool *data,
+enum sm_process_result sm_process(struct state_machine *sm, const bool *data,
                                   unsigned int count, unsigned int *num_proc);
 
 /**

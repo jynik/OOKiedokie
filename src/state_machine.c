@@ -536,7 +536,7 @@ static int process(struct state_machine *sm, bool bits)
     return handle_rx_triggers(sm, bits);
 }
 
-enum sm_process_result sm_process(struct state_machine *sm, bool *data,
+enum sm_process_result sm_process(struct state_machine *sm, const bool *data,
                                   unsigned int count, unsigned int *num_proc)
 {
     unsigned int i;
