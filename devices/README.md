@@ -8,6 +8,7 @@ include:
 * The number of bits in messages transmitted/received by the device (`num_bits`)
 * A state machine that is used to encode/decode raw data (`states`)
 * A description of how the data is divide up into fields (`fields`)
+* How each message field should be interpreted and displayed (`formatter`)
 
 This information is used to both decode and display received data,
 as well as generate IQ samples to transmit messages to the target device.
@@ -19,10 +20,21 @@ and parse.
 
 Below is a list of currently supported devices.
 
-| Device File                         | Description                                                 |
-| ----------------------------------- | ----------------------------------------------------------- |
-| [p3l-nexa2012](p3l-nexa2012.md)     | RadioShack-branded 433 MHz wireless temperature sensor      |
+| Device File                         | Description                                                    |
+| ----------------------------------- | -------------------------------------------------------------- |
+| [p3l-nexa2012](p3l-nexa2012.md)     | RadioShack-branded 433.92 MHz wireless temperature sensor      |
 
 ## Format and Structure ##
 
-TODO: Describe the format and rules/"language" for developing these files.
+Device specifications must begin with a top-level `device` object:
+
+```
+{ "device": { 
+    .. 
+}}
+```
+
+This provides a simple means for OOKiedokie to error out in an incorrect JSON
+file is provided.
+
+Next, the device specific tat

@@ -1,6 +1,7 @@
 { "device": {
 
-    "name":     "Radio Shack Indoor/Outdoor Wireless Temperature Sensor (Cat. #6300769)",
+    "name": "p3l-nexa2012",
+    "description": "Radio Shack indoor/outdoor wireless temperature sensor (catalog #6300769)",
     "num_bits": 36,
     
     "states": [

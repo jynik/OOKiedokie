@@ -62,6 +62,7 @@ struct device
     json_t *root;
 
     char *name;
+    char *description;
 
     uint8_t * data;
     size_t data_alloc_len;          /** Allocated size of data, in bytes */
@@ -255,6 +256,7 @@ out:
 static inline bool add_field(struct formatter *f, json_t *field)
 {
     const char *name;
+    const char *description;
     const char *default_value;
     int start_bit, end_bit;
     enum formatter_endianness endianness;
@@ -432,6 +434,21 @@ static inline int populate_device(struct device *d, json_t *device,
         log_verbose("Device name: %s\n", d->name);
     }
 
+    tmp = json_object_get(device, "description");
+    if (!json_is_string(tmp)) {
+        log_error("Failed to read device description string.\n");
+        goto out;
+    } else {
+        d->description = strdup(json_string_value(tmp));
+        if (!d->description) {
+            log_error("Failed to set device description: %s\n",
+                      strerror(errno));
+            goto  out;
+        }
+
+        log_verbose("Device description: %s\n", d->description);
+    }
+
     tmp = json_object_get(device, "num_bits");
     if (!json_is_integer(tmp)) {
         log_error("Failed to read \"num_bits\" property.\n");
@@ -584,6 +601,7 @@ void device_deinit(struct device *dev)
         formatter_deinit(dev->fmt);
         free(dev->data);
         free(dev->name);
+        free(dev->description);
         free(dev);
     }
 }
