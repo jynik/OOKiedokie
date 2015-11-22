@@ -743,10 +743,6 @@ static bool handle_tx_triggers(struct state_machine *sm, bool bit_val,
 
         /* Perform any additional required sample generator state updates */
         switch (active_trigger->condition) {
-            case SM_TRIGGER_COND_MSG_COMPLETE:
-                *done = true;
-                break;
-
             case SM_TRIGGER_COND_PULSE_START:
                 if (gen->curr_logic_val == true) {
                     log_error("Bug? Logic value is already 1, got PULSE_START\n");
@@ -764,28 +760,35 @@ static bool handle_tx_triggers(struct state_machine *sm, bool bit_val,
                     gen->curr_logic_val = false;
                 }
 
+            default:
+                break;
+        }
+
+        switch (active_trigger->action) {
+            case SM_TRIGGER_ACTION_APPEND_0:
+            case SM_TRIGGER_ACTION_APPEND_1:
+                if (sm->num_bits < sm->max_bits) {
+                    sm->num_bits++;
+                    *done = true;
+
+                    log_verbose("Bit count updated to %u/%u\n",
+                            sm->num_bits, sm->max_bits);
+
+                } else if (sm->num_bits > sm->max_bits) {
+                    log_error("Bit count (%u) exceeded max (%u)\n",
+                            sm->num_bits, sm->max_bits);
+                    return false;
+                }
+                break;
+
+            case SM_TRIGGER_ACTION_OUTPUT_DATA:
+                *done = true;
+                break;
 
             default:
                 break;
         }
 
-        /* Update bit count */
-        if (active_trigger->action == SM_TRIGGER_ACTION_APPEND_0 ||
-            active_trigger->action == SM_TRIGGER_ACTION_APPEND_1 ) {
-
-            if (sm->num_bits < sm->max_bits) {
-                sm->num_bits++;
-                *done = true;
-
-                log_verbose("Bit count updated to %u/%u\n",
-                        sm->num_bits, sm->max_bits);
-
-            } else if (sm->num_bits > sm->max_bits) {
-                log_error("Bit count (%u) exceeded max (%u)\n",
-                        sm->num_bits, sm->max_bits);
-                return false;
-            }
-        }
 
         sm->curr_state = active_trigger->next_state;
         log_verbose("Updated state to: %s\n", sm->curr_state->name);
