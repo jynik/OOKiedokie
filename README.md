@@ -30,4 +30,5 @@ The objectives of this project are:
  
 ## Documentation ##
 
-*TO DO*: Create and link to documents regarding usage, examples, and development
+* [Filter files](filters/README.md)
+* [Device specifications](devices/README.md)
