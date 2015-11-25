@@ -242,10 +242,11 @@ static int validate_cfg(struct ookiedokie_cfg *cfg)
     const bool have_device      = (cfg->device != NULL);
     const bool have_rx_filter   = (cfg->rx_filter != NULL);
     const bool have_rx_rec      = (cfg->rx_rec_filename != NULL);
+    const bool have_rx_dig      = (cfg->rx_rec_dig != NULL);
 
     switch (cfg->direction) {
         case DIRECTION_RX:
-            if (!cfg->device && !have_rx_rec) {
+            if (!cfg->device && !have_rx_rec && !have_rx_dig) {
                 fprintf(stderr, "Error: Either a target device or "
                                 "recording parameters must be specified.\n");
                 return -1;
