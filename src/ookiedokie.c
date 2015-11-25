@@ -34,8 +34,6 @@
 #include "complexf.h"
 #include "keyval_list.h"
 
-#define THRESHOLD   0.1f
-
 struct rx {
     struct complexf *samples;
     struct complexf *post_filter;
@@ -170,13 +168,13 @@ static void record_dig(struct rx *rx, unsigned int count)
     rx->dig.sample_no += count;
 }
 
-static inline void threshold(struct rx *rx,
+static inline void threshold(struct rx *rx, float threshold,
                              struct complexf *input, unsigned int count)
 {
     unsigned int i;
 
     for (i = 0; i < count; i++) {
-        rx->dig.samples[i] = complexf_magnitude(&input[i]) >= THRESHOLD;
+        rx->dig.samples[i] = complexf_magnitude(&input[i]) >= threshold;
     }
 }
 
@@ -230,7 +228,7 @@ int ookiedokie_rx(struct sdr *sdr, struct fir_filter *filter,
         }
 
         if (device || rx->dig.out) {
-            threshold(rx, to_threshold, count);
+            threshold(rx, cfg->rx_threshold, to_threshold, count);
         }
 
         if (rx->dig.out) {

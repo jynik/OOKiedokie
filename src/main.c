@@ -35,7 +35,7 @@
 #include "find.h"
 #include "fir.h"
 
-#define OPTIONS "r:t:d:c:D:p:R:B:A:f:s:b:g:F:v:h"
+#define OPTIONS "r:t:d:c:D:p:T:R:B:A:f:s:b:g:F:v:h"
 
 /* Required */
 #define OPTION_RX               'r'
@@ -48,6 +48,7 @@
 #define OPTION_TX_PARAM         'p'
 
 /* RX options */
+#define OPTION_RX_THRESHOLD     'T'
 #define OPTION_RX_RECORD        'R'
 #define OPTION_RX_RECORD_INPUT  0x80
 #define OPTION_RX_RECORD_DIG    'B'
@@ -94,6 +95,7 @@ static const struct option long_options[] = {
     { "tx-count",               required_argument,  0,  OPTION_TX_COUNT },
     { "tx-param",               required_argument,  0,  OPTION_TX_PARAM },
 
+    { "rx-threshold",           required_argument,  0,  OPTION_RX_THRESHOLD },
     { "rx-rec",                 required_argument,  0,  OPTION_RX_RECORD },
     { "rx-rec-input",           no_argument,        0,  OPTION_RX_RECORD_INPUT },
     { "rx-rec-dig",             required_argument,  0,  OPTION_RX_RECORD_DIG },
@@ -136,6 +138,8 @@ static void usage(const char *argv0)
     printf("  -p, --tx-param <name=value>   Device parameter value to transmit.\n");
     printf("\n");
     printf("Receive options:\n");
+    printf("  -T, --rx-threshold <value>    On/Off threshold. Range is 0.0 to 1.0.\n");
+    printf("                                Default value: 0.1\n");
     printf("  -F, --rx-filter <filename>    Use the specified filter. This may be\n");
     printf("                                the full path or just name for filter files\n");
     printf("                                in the OOKiedokie search path.\n");
@@ -355,6 +359,14 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
                 status = append_device_param(cfg, optarg);
                 if (status != 0) {
                     return status;
+                }
+                break;
+
+            case OPTION_RX_THRESHOLD:
+                cfg->rx_threshold = (float) str2double(optarg, 0.0f, 1.0f, &ok);
+                if (!ok) {
+                    fprintf(stderr, "Invalid RX threshold: %s\n", optarg);
+                    return -1;
                 }
                 break;
 

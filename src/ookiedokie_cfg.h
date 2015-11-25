@@ -60,6 +60,7 @@ struct ookiedokie_cfg {
     struct keyval_list *device_params; /**< Message field parameters */
 
     /* Receive options */
+    float rx_threshold;             /**< RX sample magnitude threshold */
     const char *rx_rec_filename;    /**< Filename to record samples to */
     const char *rx_rec_type;        /**< File format type to record with */
     const char *rx_filter;          /**< Filename of RX filter to user */
