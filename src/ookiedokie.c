@@ -27,6 +27,7 @@
 #include <signal.h>
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 
 #include "fir.h"
 #include "ookiedokie.h"
@@ -38,9 +39,13 @@
 struct rx {
     struct complexf *samples;
     struct complexf *post_filter;
-    bool            *digital;
 
-    FILE *dig_out;
+    struct {
+        FILE *out;
+        bool *samples;
+        uint64_t sample_no;
+        int8_t prev;
+    } dig;
 };
 
 struct tx {
@@ -69,12 +74,12 @@ static void init_signal_handling()
 static void rx_deinit(struct rx *rx)
 {
     if (rx) {
-        if (rx->dig_out) {
-            fclose(rx->dig_out);
+        if (rx->dig.out) {
+            fclose(rx->dig.out);
         }
 
         free(rx->samples);
-        free(rx->digital);
+        free(rx->dig.samples);
         free(rx->post_filter);
         free(rx);
     }
@@ -96,14 +101,17 @@ static struct rx * rx_init(struct sdr *sdr,
     }
 
     if (cfg->rx_rec_dig) {
-        rx->dig_out = fopen(cfg->rx_rec_dig, "w");
-        if (!rx->dig_out) {
+        rx->dig.out = fopen(cfg->rx_rec_dig, "w");
+        if (!rx->dig.out) {
             log_error("Failed to open %s: %s\n",
                       cfg->rx_rec_dig,
                       strerror(errno));
             goto out;
         }
     }
+
+    rx->dig.sample_no = 0;
+    rx->dig.prev = false;
 
     rx->samples = malloc(num_samples * sizeof(rx->samples[0]));
     if (!rx->samples) {
@@ -117,11 +125,12 @@ static struct rx * rx_init(struct sdr *sdr,
         goto out;
     }
 
-    rx->digital = malloc(num_samples * sizeof(rx->digital[0]));
-    if (!rx->samples) {
+    rx->dig.samples = malloc(num_samples * sizeof(rx->dig.samples[0]));
+    if (!rx->dig.samples) {
         perror("malloc");
         goto out;
     }
+
 
     init_signal_handling();
 
@@ -140,15 +149,25 @@ static void record_dig(struct rx *rx, unsigned int count)
 {
     unsigned int i;
 
-    for (i = 0; i < count; i++) {
-        if (rx->digital[i]) {
-            fputc('1', rx->dig_out);
-        } else {
-            fputc('0', rx->dig_out);
-        }
-
-        putc('\n', rx->dig_out);
+    if (rx->dig.sample_no == 0) {
+        rx->dig.prev = rx->dig.samples[0];
+        fprintf(rx->dig.out, "0, %c\n", rx->dig.samples[0] ? '1' : '0');
     }
+
+    for (i = 0; i < count; i++) {
+        const bool curr = rx->dig.samples[i];
+        const bool update = (curr != rx->dig.prev);
+
+        if (update) {
+            fprintf(rx->dig.out, "%"PRIu64", %c\n%"PRIu64", %c\n",
+                    rx->dig.sample_no + i - 1, rx->dig.prev   ? '1' : '0',
+                    rx->dig.sample_no + i, rx->dig.samples[i] ? '1' : '0');
+
+            rx->dig.prev = curr;
+        }
+    }
+
+    rx->dig.sample_no += count;
 }
 
 static inline void threshold(struct rx *rx,
@@ -157,7 +176,7 @@ static inline void threshold(struct rx *rx,
     unsigned int i;
 
     for (i = 0; i < count; i++) {
-        rx->digital[i] = complexf_magnitude(&input[i]) >= THRESHOLD;
+        rx->dig.samples[i] = complexf_magnitude(&input[i]) >= THRESHOLD;
     }
 }
 
@@ -210,16 +229,16 @@ int ookiedokie_rx(struct sdr *sdr, struct fir_filter *filter,
             }
         }
 
-        if (device || rx->dig_out) {
+        if (device || rx->dig.out) {
             threshold(rx, to_threshold, count);
         }
 
-        if (rx->dig_out) {
+        if (rx->dig.out) {
             record_dig(rx, count);
         }
 
         if (device) {
-            values = device_process(device, rx->digital, count);
+            values = device_process(device, rx->dig.samples, count);
             if (values && keyval_list_size(values) != 0) {
                 size_t i;
                 for (i = 0; i < keyval_list_size(values); i++) {
@@ -232,7 +251,6 @@ int ookiedokie_rx(struct sdr *sdr, struct fir_filter *filter,
         }
 
     }
-
 
 out:
     if (status == SDR_FILE_EOF) {
