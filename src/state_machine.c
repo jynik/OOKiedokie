@@ -457,7 +457,9 @@ static inline enum sm_process_result handle_rx_triggers(struct state_machine *sm
                     break;
 
                 case SM_TRIGGER_COND_TIMEOUT:
-                    if (sm->elapsed_us >= sm->curr_state->timeout_us) {
+                    if (sm->curr_state->timeout_us != 0 &&
+                        sm->elapsed_us >= sm->curr_state->timeout_us) {
+
                         active_trigger = t;
                         log_verbose("{%s} Timeout trigger @ sample %"PRIu64"\n",
                                     sm->curr_state->name, sm->count_monotonic);
