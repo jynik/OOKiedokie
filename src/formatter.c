@@ -36,12 +36,17 @@
 
 struct formatter {
     struct formatter_field *fields;
-    unsigned int num_fields;
+    size_t num_fields;
 
     unsigned int max_bit;
 
     struct formatter_params output;
     uint8_t *input;
+};
+
+struct enum_def {
+    const char *str;
+    spt value;
 };
 
 struct formatter_field {
@@ -53,6 +58,8 @@ struct formatter_field {
     float scaling;
     float offset;
     spt default_value;
+    struct enum_def *enums;
+    size_t enum_count;
 };
 
 static inline unsigned int get_width(const struct formatter_field *field)
@@ -190,6 +197,29 @@ static spt str_to_spt(const struct formatter_field *field,
             break;
         }
 
+        case FORMATTER_FMT_ENUM: {
+            size_t i;
+            bool have_enum = false;
+
+            for (i = 0; i < field->enum_count && !have_enum; i++) {
+                if (!strcasecmp(str, field->enums[i].str)) {
+                    value = field->enums[i].value;
+                    have_enum = true;
+                }
+            }
+
+            if (!have_enum) {
+                uint64_t tmp = str2uint64(str, 0, UINT64_MAX, &conv_ok);
+                if (!conv_ok) {
+                    goto inval;
+                }
+
+                value = spt_from_uint64(tmp);
+            }
+
+            break;
+        }
+
         default:
             log_critical("Bug: Invalid field format: %d\n", field->format);
             return spt_from_uint64(0);
@@ -212,9 +242,9 @@ inval:
 
 bool formatter_add_field(struct formatter *f,
                          const char *name,
-                         const char *default_value,
                          unsigned int start_bit, unsigned int end_bit,
                          enum formatter_fmt format,
+                         size_t enum_count,
                          enum formatter_endianness endianness,
                          float scaling, float offset)
 {
@@ -253,12 +283,37 @@ bool formatter_add_field(struct formatter *f,
                 case FORMATTER_FMT_TWOS_COMPLEMENT:
                 case FORMATTER_FMT_FLOAT:
                     f->fields[i].format = format;
+                    if (enum_count != 0) {
+                        log_error("Non-zero enum count provided for non-enum.\n");
+                        return false;
+                    }
+
+                    f->fields[i].enum_count = 0;
+                    break;
+
+                case FORMATTER_FMT_ENUM:
+                    f->fields[i].format = format;
+                    if (enum_count == 0) {
+                        log_error("Enumeration format requires 1 or more values"
+                                  " to be defined\n");
+                        return false;
+                    }
+
+                    f->fields[i].enum_count = enum_count;
+                    f->fields[i].enums = calloc(enum_count,
+                                                sizeof(struct enum_def));
+
+                    if (f->fields[i].enums == NULL) {
+                        perror("calloc");
+                        return false;
+                    }
                     break;
 
                 default:
                     log_error("Invalid format option: %d\n", format);
                     return false;
             }
+
 
             switch (endianness) {
                 case FORMATTER_ENDIAN_BIG:
@@ -272,23 +327,85 @@ bool formatter_add_field(struct formatter *f,
             }
 
 
-            f->fields[i].default_value  = str_to_spt(&f->fields[i],
-                                                     default_value,
-                                                     &conv_ok);
-
-            if (!conv_ok) {
-                log_error("Invalid default value for field \"%s\": %s\n",
-                          f->fields[i].name, default_value);
-
-                return false;
-            }
-
+            /* Initialized via formatter_set_field_default() */
             return true;
         }
     }
 
     log_error("No room left in formatter for field: %s\n", name);
     return false;
+}
+
+bool formatter_add_field_enum(struct formatter *f, const char *field_name,
+                              const char *enum_name, spt value)
+{
+    struct formatter_field *field = NULL;
+    size_t i;
+
+    for (i = 0; i < f->num_fields; i++) {
+        if (!strcasecmp(f->fields[i].name, field_name)) {
+            field = &f->fields[i];
+            break;
+        }
+    }
+
+    if (field == NULL) {
+        log_error("Cannot add enumeration to unknown field: %s\n", field_name);
+        return false;
+    }
+
+    for (i = 0; i < field->enum_count; i++) {
+        if (field->enums[i].str == NULL) {
+            struct enum_def *e = &field->enums[i];
+            uint64_t tmp_val;
+            bool ok;
+
+            e->str = strdup(enum_name);
+            if (!e->str) {
+                perror("strdup");
+                return false;
+            }
+
+            e->value = value;
+            return true;
+
+        } else if (!strcasecmp(field->enums[i].str, enum_name)) {
+            log_error("Error: Duplicate enumeration name (%s)\n", enum_name);
+            return false;
+        }
+    }
+
+    log_error("Error: Enum list size exceeded.\n");
+    return false;
+}
+
+bool formatter_set_field_default(struct formatter *f, const char *field_name,
+                                 const char *default_value)
+{
+    struct formatter_field *field = NULL;
+    size_t i;
+    bool ok;
+
+    for (i = 0; field == NULL && i < f->num_fields; i++) {
+        if (f->fields[i].name && !strcasecmp(f->fields[i].name, field_name)) {
+            field = &f->fields[i];
+        }
+    }
+
+    if (field == NULL) {
+        return false;
+    }
+
+    field->default_value = str_to_spt(field, default_value, &ok);
+
+    if (!ok) {
+        log_error("Invalid default value for field \"%s\": %s\n",
+                  field->name, default_value);
+
+        return false;
+    } else {
+        return true;
+    }
 }
 
 static spt get_field_value(struct formatter_field *f, const uint8_t *data)
@@ -390,6 +507,24 @@ static void field_data_to_str(char *str, size_t max_chars, spt value,
             break;
         }
 
+        case FORMATTER_FMT_ENUM: {
+            size_t i;
+            bool have_enum = false;
+
+            for (i = 0; i < field->enum_count && !have_enum; i++) {
+                if (field->enums[i].value == value) {
+                    snprintf(str, max_chars, "%s", field->enums[i].str);
+                    have_enum = true;
+                }
+            }
+
+            if (!have_enum) {
+                snprintf(str, max_chars, "0x%"PRIx64, value);
+            }
+
+            break;
+        }
+
         default:
             log_critical("Bug: invalid format %d\n", field->format);
     }
@@ -397,27 +532,36 @@ static void field_data_to_str(char *str, size_t max_chars, spt value,
 
 bool formatter_initialized(struct formatter *f)
 {
-    unsigned int i;
+    size_t i, j;
 
     for (i = 0; i < f->num_fields; i++) {
         if (f->fields[i].format == FORMATTER_FMT_INVALID) {
-            log_error("Field %u has invalid format.\n", i);
+            log_error("Field %zd has invalid format.\n", i);
             return false;
         }
 
         if (f->fields[i].start_bit == BIT_UNINITIALIZED) {
-            log_error("Field %u has uninitialized start bit value.\n");
+            log_error("Field %zd has uninitialized start bit value.\n");
             return false;
         }
 
         if (f->fields[i].end_bit == BIT_UNINITIALIZED) {
-            log_error("Field %u has uninitialized end bit value.\n");
+            log_error("Field %zd has uninitialized end bit value.\n");
             return false;
         }
 
         if (f->fields[i].endianness == FORMATTER_ENDIAN_INVALD) {
-            log_error("Field %u has uninitialized endianness  value.\n");
+            log_error("Field %zd has uninitialized endianness value.\n");
             return false;
+        }
+
+        if (f->fields[i].format == FORMATTER_FMT_ENUM) {
+            for (j = 0; j < f->fields[i].enum_count; j++) {
+                if (f->fields[i].enums[j].str == NULL) {
+                    log_error("Field %zd, enum %zd is unuinitialized.\n", i, j);
+                    return false;
+                }
+            }
         }
     }
 
@@ -579,6 +723,8 @@ enum formatter_fmt formatter_fmt_value(const char *str)
         return FORMATTER_FMT_TWOS_COMPLEMENT;
     } else if (!strcasecmp("float", str)) {
         return FORMATTER_FMT_FLOAT;
+    } else if (!strcasecmp("enumeration", str)) {
+        return FORMATTER_FMT_ENUM;
     } else {
         return FORMATTER_FMT_INVALID;
     }
@@ -587,9 +733,14 @@ enum formatter_fmt formatter_fmt_value(const char *str)
 void formatter_deinit(struct formatter *f)
 {
     if (f) {
-        unsigned int i;
+        size_t i, j;
 
         for (i = 0; i < f->num_fields; i++) {
+            for (j = 0; j < f->fields[i].enum_count; j++) {
+                free((void*) f->fields[i].enums[j].str);
+            }
+
+            free(f->fields[i].enums);
             free(f->fields[i].name);
         }
 

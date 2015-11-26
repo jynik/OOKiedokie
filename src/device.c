@@ -266,6 +266,9 @@ static inline bool add_field(struct formatter *f, json_t *field)
 
     json_t *tmp;
 
+    size_t enum_count = 0;
+    json_t *enums = NULL;
+
     tmp = json_object_get(field, "name");
     if (!json_is_string(tmp)) {
         log_error("Failed to get field name.\n");
@@ -339,6 +342,20 @@ static inline bool add_field(struct formatter *f, json_t *field)
         }
     }
 
+    if (format == FORMATTER_FMT_ENUM) {
+        enums = json_object_get(field, "enum_values");
+        if (!json_is_array(enums)) {
+            log_error("No \"enum_values\" array found for enumeration: %s\n", name);
+            return false;
+        }
+
+        enum_count = json_array_size(enums);
+        if (enum_count == 0) {
+            log_error("Error: \"enum_values\" in field \"%s\" is empty.\n", name);
+        }
+
+    }
+
     tmp = json_object_get(field, "offset");
     if (!json_is_number(tmp)) {
         log_verbose("No offset value. Defaulting to %f.\n", offset);
@@ -355,10 +372,53 @@ static inline bool add_field(struct formatter *f, json_t *field)
         log_verbose("Scaling value: %f\n", scaling);
     }
 
-    return formatter_add_field(f, name, default_value,
-                               start_bit, end_bit,
-                               format, endianness,
-                               scaling, offset);
+    if (!formatter_add_field(f, name,
+                             start_bit, end_bit,
+                             format, enum_count,
+                             endianness, scaling, offset)) {
+
+        return false;
+    }
+
+    if (format == FORMATTER_FMT_ENUM) {
+        size_t i;
+        json_t *e;
+        uint64_t value;
+        bool conv_ok;
+        const char *enum_name;
+
+        json_array_foreach(enums, i, e) {
+            tmp = json_object_get(e, "string");
+            if (!json_is_string(tmp)) {
+                log_error("Enumeration value %zd is missing \"string.\"\n", i);
+                return false;
+            }
+
+            enum_name = json_string_value(tmp);
+
+            tmp = json_object_get(e, "value");
+            if (!json_is_string(tmp)) {
+                log_error("Enumeration item \"%s\" is missing \"value.\"\n", enum_name);
+                return false;
+            }
+
+            value = str2uint64(json_string_value(tmp), 0, UINT64_MAX, &conv_ok);
+            if (!conv_ok) {
+                log_error("Invalid enumeration value: %s\n",
+                          json_string_value(tmp));
+                return false;
+            }
+
+            if (!formatter_add_field_enum(f, name, enum_name, spt_from_uint64(value))) {
+                return false;
+            } else {
+                log_verbose("Added enumeration entry: %s=0x%"PRIx64"\n",
+                            enum_name, value);
+            }
+        }
+    }
+
+    return formatter_set_field_default(f, name, default_value);
 }
 
 static inline struct formatter *

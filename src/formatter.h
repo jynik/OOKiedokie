@@ -41,6 +41,7 @@ enum formatter_fmt
     FORMATTER_FMT_SIGN_MAGNITUDE,   /**< Sign-magnitude value, decimal */
     FORMATTER_FMT_TWOS_COMPLEMENT,  /**< Two's complement value, decimal */
     FORMATTER_FMT_FLOAT,            /**< Floating point value */
+    FORMATTER_FMT_ENUM,             /**< Enumerated hex values */
 };
 
 /**
@@ -96,8 +97,6 @@ struct formatter * formatter_init(unsigned int num_fields, unsigned int max_bit)
  *
  * @param   name            Name of the field to add
  *
- * @param   default_value   Default field value, as a string.
- *
  * @param   start_bit       Position of first bit of the field, with respect
  *                          to the message it is found in. 0 is the left-most
  *                          bit.
@@ -108,6 +107,12 @@ struct formatter * formatter_init(unsigned int num_fields, unsigned int max_bit)
  *
  * @param   format          How this field is formatter and should be
  *                          interpreted.
+ *
+ * @param   enum_count      When format=FORMATTER_FMT_ENUM, this should
+ *                          list the number of enumeraged values. Otherwise
+ *                          it should be 0. When this is non-zero,
+ *                          formatter_add_field_enum() must be called to add
+ *                          each enum value.
  *
  * @param   endianness      Bit endianness of a value within its field.
  *
@@ -125,11 +130,38 @@ struct formatter * formatter_init(unsigned int num_fields, unsigned int max_bit)
  */
 bool formatter_add_field(struct formatter *f,
                          const char *name,
-                         const char *default_value,
                          unsigned int start_bit, unsigned int end_bit,
                          enum formatter_fmt format,
+                         size_t enum_count,
                          enum formatter_endianness endianness,
                          float scaling, float offset);
+
+/**
+ * Add an enumeration string-value pair to the specified field
+ *
+ * @param   f               Formatter object to update
+ * @param   field_name      Name of the field to update
+ * @param   enum_name       Enumeration name string
+ * @param   value           Value to associated with `enum_name`
+ *
+ * @return true on success, for false on failure
+ */
+bool formatter_add_field_enum(struct formatter *f, const char *field_name,
+                              const char *enum_name, spt value);
+
+/**
+ * Set the default value of a field. This should be called afert
+ * formatter_add_field() and formatter_add_field_enum(), if relevant.
+ *
+ * @param   f               Formatter object to update
+ * @param   field_name      Name of the field to update
+ * @param   default_value   Default field value, as a string.
+ *
+ * @return true on success, for false on failure
+ */
+
+bool formatter_set_field_default(struct formatter *f, const char *field_name,
+                                 const char *default_value);
 
 /**
  * Test if all fields in the formatter have been properly initialized
