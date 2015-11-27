@@ -1,0 +1,181 @@
+{ "device": {
+
+    "name": "unknown-remote1",
+    "description": "Unknown remote control operating at 433.92 MHz",
+    "num_bits": 32,
+
+    "states": [
+        {
+            "name":     "reset",
+
+            "triggers": [
+                {
+                    "condition": "always",
+                    "state":     "idle"
+                }
+            ]
+        },
+
+        {
+            "name":     "idle",
+             "triggers": [
+                {
+                    "condition": "pulse_start",
+                    "state":     "initial_pulse"
+                },
+
+                {
+                    "condition": "timeout",
+                    "state":     "reset"
+                }
+            ]
+        },
+
+        {
+            "name":         "initial_pulse",
+            "duration_us":  8900,
+            "timeout_us":   17800,
+
+            "triggers": [
+                {
+                    "condition": "pulse_end",
+                    "state":     "initial_off_time"
+                },
+
+                {
+                    "condition": "timeout",
+                    "state":     "reset"
+                }
+            ]
+        },
+
+        {
+            "name":         "initial_off_time",
+            "duration_us":  4400,
+            "timeout_us":   8800,
+
+            "triggers": [
+                {
+                    "condition": "pulse_start",
+                    "state":     "bit_pulse"
+                },
+
+                {
+                    "condition": "timeout",
+                    "state":     "reset"
+                }
+            ]
+        },
+
+        {
+            "name":         "bit_pulse",
+            "duration_us":  550,
+            "timeout_us":   1100,
+
+            "triggers": [
+                {
+                    "condition": "msg_complete",
+                    "state":     "reset",
+                    "action":    "output_data"
+                },
+
+                {
+                    "condition": "pulse_end",
+                    "state":     "bit_off_time"
+                },
+
+                {
+                    "condition": "timeout",
+                    "state":     "reset"
+                }
+            ]
+        },
+
+        {
+            "name":         "bit_off_time",
+            "timeout_us":   3400, 
+        
+            "triggers": [
+                {
+                    "condition":    "pulse_start",
+                    "duration_us":  1700,
+                    "state":        "bit_pulse",
+                    "action":       "append_1"
+                },
+
+                {
+                    "condition":    "pulse_start",
+                    "duration_us":  550,
+                    "state":        "bit_pulse",
+                    "action":       "append_0"
+                },
+
+                {
+                    "condition": "timeout",
+                    "state":     "reset"
+                }
+            ]
+        }
+    ], 
+
+    "fields": [
+        {
+            "name":         "Preamble",
+            "default":      "0x5d",
+            "start_bit":    0,
+            "end_bit":      7,
+            "endianness":   "big",
+            "format":       "hex"
+        },
+
+        {
+            "name":         "ID",
+            "default":      "0x00", 
+            "start_bit":    8,
+            "end_bit":      15,
+            "endianness":   "big",
+            "format":       "hex"
+        },
+
+        {
+            "name":         "Button",
+            "default":      "Power",
+            "start_bit":    16,
+            "end_bit":      31,
+            "endianness":   "big",
+            "format":       "enumeration",
+            "enum_values": [
+                { "string": "Power",        "value": "0x7887" },
+                { "string": "Pause",        "value": "0x32cd" },
+                { "string": "P1",           "value": "0x708f" },
+                { "string": "P2",           "value": "0x609f" },
+                { "string": "P3",           "value": "0xca35" }, 
+                { "string": "Up1",          "value": "0xd02f" },
+                { "string": "Down1",        "value": "0x50af" },
+                { "string": "Up2",          "value": "0x906f" },
+                { "string": "Down2",        "value": "0x10ef" },
+                { "string": "Up3",          "value": "0xc03f" },
+                { "string": "Down3",        "value": "0x40bf" },
+                { "string": "Up4",          "value": "0x6987" }, 
+                { "string": "Down4",        "value": "0xf20d" },
+                { "string": "0",            "value": "0x9867" }, 
+                { "string": "1",            "value": "0xf00f" }, 
+                { "string": "2",            "value": "0x08f7" },
+                { "string": "3",            "value": "0x8877" },
+                { "string": "4",            "value": "0x48b7" }, 
+                { "string": "5",            "value": "0xc837" }, 
+                { "string": "6",            "value": "0x28d7" }, 
+                { "string": "7",            "value": "0xa857" }, 
+                { "string": "8",            "value": "0x6897" }, 
+                { "string": "9",            "value": "0xe817" }, 
+                { "string": "*",            "value": "0x18e7" },
+                { "string": "#",            "value": "0x58a7" }, 
+                { "string": "Function 1",   "value": "0x20df" }, 
+                { "string": "Function 2",   "value": "0xa05f" },
+                { "string": "Function 3",   "value": "0x30cf" }, 
+                { "string": "Function 4",   "value": "0xb04f" }
+            ]
+        }
+    ]
+}}
+
