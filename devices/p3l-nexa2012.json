@@ -71,9 +71,7 @@
                 {
                     "condition":    "msg_complete",
                     "state":        "reset",
-                    "action":       "output_data",
-
-                    "comment":      "This occurs when # received bits == max_bits"
+                    "action":       "output_data"
                 },
 
                 {
