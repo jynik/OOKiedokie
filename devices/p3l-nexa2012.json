@@ -154,6 +154,17 @@
         },
 
         {
+            "name":         "Temperature (F)",
+            "default":      "133.7",
+            "start_bit":    16,
+            "end_bit":      27,
+            "endianness":   "big",
+            "format":       "float",
+            "scaling":      0.18,
+            "offset":       32
+        },
+
+        {
             "name":         "Unknown-2",
             "default":      "0",
             "start_bit":    28,
