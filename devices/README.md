@@ -19,9 +19,10 @@ and parse.
 
 Below is a list of currently supported devices.
 
-| Device File                         | Description                                                    |
-| ----------------------------------- | -------------------------------------------------------------- |
-| [p3l-nexa2012](p3l-nexa2012.md)     | Radio Shack-branded 433.92 MHz wireless temperature sensor     |
+| Device File                           | Description                                                    |
+| ------------------------------------- | -------------------------------------------------------------- |
+| [p3l-nexa2012](p3l-nexa2012.md)       | Radio Shack-branded 433.92 MHz wireless temperature sensor     |
+| [unknown-remote1](unknown-remote1.md) | Unknown wireless remote control operating at 433.92 MHz.       | 
 
 # Format and Structure #
 
