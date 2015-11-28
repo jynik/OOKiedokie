@@ -163,6 +163,9 @@ static spt str_to_spt(const struct formatter_field *field,
 
             tmp = (int64_t) (((float) tmp - field->offset) / field->scaling);
             value = spt_from_int64(tmp);
+
+            /* Mask off sign-extended bits to field with */
+            value &= mask;
             break;
         }
 
@@ -194,6 +197,9 @@ static spt str_to_spt(const struct formatter_field *field,
             }
 
             value = spt_from_float((float) tmp, field->scaling, field->offset);
+
+            /* Mask off sign-extended bits to field with */
+            value &= mask;
             break;
         }
 
@@ -444,6 +450,9 @@ static void field_data_to_str(char *str, size_t max_chars, spt value,
                                struct formatter_field *field)
 {
     const unsigned int field_width = get_width(field);
+    const uint64_t mask = (field_width < 64) ?
+                            (1llu << field_width) - 1 :
+                            0xffffffffffffffffllu;
 
     switch (field->format) {
 
@@ -480,7 +489,19 @@ static void field_data_to_str(char *str, size_t max_chars, spt value,
         }
 
         case FORMATTER_FMT_TWOS_COMPLEMENT: {
-            int64_t tmp = spt_to_int64(value);
+            int64_t tmp;
+            bool neg;
+
+            neg = (value & (1 << (field_width - 1))) != 0;
+            if (neg) {
+                value = (~value + 1) & mask;
+            }
+
+            tmp = spt_to_int64(value);
+            if (neg) {
+                tmp = -tmp;
+            }
+
             tmp = (tmp * field->scaling) + field->offset;
             snprintf(str, max_chars, "%"PRIi64, tmp);
             break;
@@ -502,7 +523,20 @@ static void field_data_to_str(char *str, size_t max_chars, spt value,
         }
 
         case FORMATTER_FMT_FLOAT: {
-            float tmp = spt_to_float(value, field->scaling, field->offset);
+            float tmp;
+            float scaling;
+            bool neg;
+
+            neg = (value & (1 << (field_width - 1))) != 0;
+            if (neg) {
+                value = (~value + 1) & mask;
+                scaling = -field->scaling;
+            } else {
+                scaling = field->scaling;
+            }
+
+            tmp = spt_to_float(value, scaling, field->offset);
+
             snprintf(str, max_chars, "%1.3f", tmp);
             break;
         }
