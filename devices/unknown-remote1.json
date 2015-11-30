@@ -93,8 +93,8 @@
 
         {
             "name":         "bit_off_time",
-            "timeout_us":   3400, 
-        
+            "timeout_us":   3400,
+
             "triggers": [
                 {
                     "condition":    "pulse_start",
@@ -116,7 +116,7 @@
                 }
             ]
         }
-    ], 
+    ],
 
     "fields": [
         {
@@ -130,7 +130,7 @@
 
         {
             "name":         "ID",
-            "default":      "0x00", 
+            "default":      "0x00",
             "start_bit":    8,
             "end_bit":      15,
             "endianness":   "big",
@@ -149,30 +149,30 @@
                 { "string": "Pause",        "value": "0x32cd" },
                 { "string": "P1",           "value": "0x708f" },
                 { "string": "P2",           "value": "0x609f" },
-                { "string": "P3",           "value": "0xca35" }, 
+                { "string": "P3",           "value": "0xca35" },
                 { "string": "Up1",          "value": "0xd02f" },
                 { "string": "Down1",        "value": "0x50af" },
                 { "string": "Up2",          "value": "0x906f" },
                 { "string": "Down2",        "value": "0x10ef" },
                 { "string": "Up3",          "value": "0xc03f" },
                 { "string": "Down3",        "value": "0x40bf" },
-                { "string": "Up4",          "value": "0x6987" }, 
-                { "string": "Down4",        "value": "0xf20d" },
-                { "string": "0",            "value": "0x9867" }, 
-                { "string": "1",            "value": "0xf00f" }, 
+                { "string": "Up4",          "value": "0xf20d" },
+                { "string": "Down4",        "value": "0x807f" },
+                { "string": "0",            "value": "0x9867" },
+                { "string": "1",            "value": "0xf00f" },
                 { "string": "2",            "value": "0x08f7" },
                 { "string": "3",            "value": "0x8877" },
-                { "string": "4",            "value": "0x48b7" }, 
-                { "string": "5",            "value": "0xc837" }, 
-                { "string": "6",            "value": "0x28d7" }, 
-                { "string": "7",            "value": "0xa857" }, 
-                { "string": "8",            "value": "0x6897" }, 
-                { "string": "9",            "value": "0xe817" }, 
+                { "string": "4",            "value": "0x48b7" },
+                { "string": "5",            "value": "0xc837" },
+                { "string": "6",            "value": "0x28d7" },
+                { "string": "7",            "value": "0xa857" },
+                { "string": "8",            "value": "0x6897" },
+                { "string": "9",            "value": "0xe817" },
                 { "string": "*",            "value": "0x18e7" },
-                { "string": "#",            "value": "0x58a7" }, 
-                { "string": "Function 1",   "value": "0x20df" }, 
+                { "string": "#",            "value": "0x58a7" },
+                { "string": "Function 1",   "value": "0x20df" },
                 { "string": "Function 2",   "value": "0xa05f" },
-                { "string": "Function 3",   "value": "0x30cf" }, 
+                { "string": "Function 3",   "value": "0x30cf" },
                 { "string": "Function 4",   "value": "0xb04f" }
             ]
         }

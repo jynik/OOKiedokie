@@ -18,5 +18,4 @@ Each message contains three fields:
   * An 8-bit address or ID. This differs across devices, but appears to be configurable. This might be used to address different units within the associated system.
   * A 16-bit key code. This is separated into two bytes, `B1` and `B2` such that `B2 = ~B1`.
 
-Each time a button is pressed, its associated message is transmitted 3 times,
-with approximately 42.5 milliseconds between each repetition.
+While a button is held in the pressed state, its associated message continually transmitted with approximately 42.5 milliseconds between each repetition.
