@@ -72,10 +72,13 @@ Each entry in the `states` array defines conditions under which to transition
 to the next state, and any actions to perform during the transition. This is
 detailed in the following section.
 
-Lastly, a `fields` array defines how the `num_bits` bits in device messages
+A `fields` array defines how the `num_bits` bits in device messages
 are organized into fields. Each field entry describes the position of the
 field bits in the message, and how the data is formatted in that field. The
 `fields` array is described more in a later section.
+
+A `ts_mode` variable may be specified to timestamp messages as they are
+decoded. This is detailed in a later section.
 
 ## State Machine Definition ##
 
@@ -359,3 +362,19 @@ are the available options:
 The "float" option is similar to the "two's complement" option, exception that its fractional portion
 is retained when the scaling factor is applied. As such, the precision is a factor of the field width,
 scaling, and offset.
+
+
+## Timestamp Mode ##
+
+Messages may be timestamped as they are decoded on the host. This is disabled by default, but may be
+enabled by specifying a `ts_mode` variable in the device specification file. When enabled, the
+timestamp will be printed as a "Decode Timestamp" field prior to other message fields.
+
+Options for `ts_mode` are as follows:
+
+| Mode              | Description                                                           |
+| ----------------- | --------------------------------------------------------------------- |
+| "none"            | Do not timestamp decoded messages. (Default)                          |
+| "unix"            | Timestamp is an integer in seconds since the Unix Epoch.              |
+| "unix-frac"       | Timestamp is a fractional value in seconds since the Unix Epoch.      |
+|

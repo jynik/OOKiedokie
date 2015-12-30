@@ -426,9 +426,11 @@ create_formatter(json_t *device, unsigned int num_bits)
 {
     int status = -1;
     struct formatter *f = NULL;
-    json_t *fields, *field;
+    json_t *fields, *field, *ts_mode_json;
     size_t num_fields;
     size_t i;
+    enum formatter_ts_mode ts_mode;
+    const char *tmp_str;
 
     fields = json_object_get(device, "fields");
     if (!json_is_array(fields)) {
@@ -441,11 +443,34 @@ create_formatter(json_t *device, unsigned int num_bits)
         log_error("Fields array is empty.\n");
         return NULL;
     } else if (num_fields > UINT_MAX) {
-        log_error("Fields  array is too large.\n");
+        log_error("Fields array is too large.\n");
         return NULL;
     }
 
-    f = formatter_init((unsigned int) num_fields, num_bits);
+    ts_mode_json = json_object_get(device, "ts_mode");
+    if (ts_mode_json) {
+        if (json_is_string(ts_mode_json)) {
+            tmp_str = json_string_value(ts_mode_json);
+            if (tmp_str) {
+                ts_mode = formatter_ts_mode_value(tmp_str);
+                if (ts_mode == FORMATTER_TS_INVALID) {
+                    log_error("Invalid 'ts_mode' value: %s\n", tmp_str);
+                    return NULL;
+                }
+            } else {
+                log_error("Failed to read 'ts_mode'.\n");
+                return NULL;
+            }
+        } else {
+            log_error("'ts_mode' must be a string.\n");
+            return NULL;
+        }
+    } else {
+        log_verbose("No ts_mode specified. Setting mode to NONE.\n");
+        ts_mode = FORMATTER_TS_NONE;
+    }
+
+    f = formatter_init((unsigned int) num_fields, num_bits, ts_mode);
     if (!f) {
         return NULL;
     }

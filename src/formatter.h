@@ -58,6 +58,22 @@ enum formatter_endianness
 };
 
 /**
+ * Reception timestamping mode.
+ *
+ * Note that the timestamps reflect when the host has parsed them message - not
+ * when the signal has entered the HW RFFE.
+ */
+enum formatter_ts_mode
+{
+    FORMATTER_TS_INVALID = 0,   /**< Invalid mode selection */
+    FORMATTER_TS_NONE,          /**< Do not timestamp received messages */
+    FORMATTER_TS_UNIX_INT,      /**< Integer seconds since Unix Epoch */
+    FORMATTER_TS_UNIX_FRAC,     /**< Fractional seconds since Unix Epoch */
+    FORMATTER_TS_DATETIME_24,   /**< Date and 24-hour time */
+    FORMATTER_TS_DATETIME_AMPM, /**< Data and 12-hour time with am/pm */
+};
+
+/**
  * Formatter field parameter name/value pair
  */
 struct formatter_param {
@@ -86,9 +102,12 @@ struct formatter;
  *
  * @param   max_bits        Total length of all fields fields, in bits.
  *
+ * @param   ts_mode         Timestamping mode
+ *
  * @return Formatter handle on success, or NULL on failure
  */
-struct formatter * formatter_init(unsigned int num_fields, unsigned int max_bit);
+struct formatter * formatter_init(unsigned int num_fields, unsigned int max_bit,
+                                  enum formatter_ts_mode ts_mode);
 
 /**
  * Add a filed description to the specified formatter object
@@ -261,6 +280,19 @@ enum formatter_endianness formatter_endianess_value(const char *str);
  * @return A FORMATTER_FMT_* value as specified above
  */
 enum formatter_fmt formatter_fmt_value(const char *str);
+
+/**
+ * Convert a string to a FORMATTER_TS_* value, as listed below. This function
+ * is case-insensitve.
+ *
+ * <pre>
+ *      "none"                  ->      FORMATTER_TS_NONE (default)
+ *      "unix"                  ->      FORMATTER_TS_UNIX_INT
+ *      "unix-frac"             ->      FORMATTER_TS_UNIX_FRAC
+ * </pre>
+ *
+ */
+enum formatter_ts_mode formatter_ts_mode_value(const char *str);
 
 /**
  * Deinitialize and deallocate the provided formatter.

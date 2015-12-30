@@ -26,6 +26,9 @@
 #include <limits.h>
 #include <inttypes.h>
 #include <float.h>
+#include <errno.h>
+#include <sys/time.h>
+#include <time.h>
 
 #include "spt.h"
 #include "formatter.h"
@@ -42,6 +45,8 @@ struct formatter {
 
     struct formatter_params output;
     uint8_t *input;
+
+    enum formatter_ts_mode ts_mode;
 };
 
 struct enum_def {
@@ -67,7 +72,8 @@ static inline unsigned int get_width(const struct formatter_field *field)
     return field->end_bit - field->start_bit + 1;
 }
 
-struct formatter * formatter_init(unsigned int num_fields, unsigned int max_bit)
+struct formatter * formatter_init(unsigned int num_fields, unsigned int max_bit,
+                                  enum formatter_ts_mode ts_mode)
 {
     int status = -1;
     struct formatter *f = NULL;
@@ -94,6 +100,8 @@ struct formatter * formatter_init(unsigned int num_fields, unsigned int max_bit)
     f->max_bit = max_bit;
 
     f->output.count = num_fields;
+
+    f->ts_mode = ts_mode;
 
     f->fields = calloc(num_fields, sizeof(f->fields[0]));
     if (!f->fields) {
@@ -568,6 +576,11 @@ bool formatter_initialized(struct formatter *f)
 {
     size_t i, j;
 
+    if (f->ts_mode == FORMATTER_TS_INVALID) {
+        log_error("Formatter timestamp mode is unset.\n");
+        return false;
+    }
+
     for (i = 0; i < f->num_fields; i++) {
         if (f->fields[i].format == FORMATTER_FMT_INVALID) {
             log_error("Field %zd has invalid format.\n", i);
@@ -602,6 +615,102 @@ bool formatter_initialized(struct formatter *f)
     return true;
 }
 
+static const char ts_key[] = "Decode Timestamp";
+
+static bool timestamp_unix(struct keyval_list *kv_list, bool frac)
+{
+    int status;
+    char buf[32];
+    double ts;
+    struct timeval tv;
+    struct keyval kv;
+
+    status = gettimeofday(&tv, NULL);
+    if (status != 0) {
+        log_error("Failed to get current time: %s\n", strerror(errno));
+        return;
+    }
+
+    ts = tv.tv_sec + ((double) tv.tv_usec / 1000000.0);
+
+    if (frac) {
+        snprintf(buf, sizeof(buf), "%f", ts);
+    } else {
+        ts += 0.5;  /* Integer round when we cast to an unsigned */
+    }
+
+    kv.key = ts_key;
+    kv.value = buf;
+    return keyval_list_append(kv_list, &kv);
+}
+
+static bool timestamp_datetime(struct keyval_list *kv_list, bool ampm)
+{
+    int status;
+    time_t t;
+    struct tm *tmp;
+    size_t len;
+    struct keyval kv;
+    char buf[80];
+
+    t = time(NULL);
+    tmp = localtime(&t);
+    if (tmp == NULL) {
+        log_error("Failed to get local time.\n");
+        return false;
+    }
+
+    if (ampm) {
+        len = strftime(buf, sizeof(buf), "%Y-%m-%d %I:%M:%S %p", tmp);
+    } else {
+        len = strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", tmp);
+    }
+
+    if (len != 0) {
+        kv.key   = ts_key;
+        kv.value = buf;
+        return keyval_list_append(kv_list, &kv);
+    } else {
+        log_error("Failed to format timestamp.\n");
+        return false;
+    }
+}
+
+static void timestamp(const struct formatter *f, struct keyval_list *kv_list)
+{
+    bool success;
+    char buf[64];
+
+    switch (f->ts_mode) {
+        case FORMATTER_TS_NONE:
+            success = true;
+            break;
+
+        case FORMATTER_TS_UNIX_INT:
+            success = timestamp_unix(kv_list, false);
+            break;
+
+        case FORMATTER_TS_UNIX_FRAC:
+            success = timestamp_unix(kv_list, true);
+            break;
+
+        case FORMATTER_TS_DATETIME_24:
+            success = timestamp_datetime(kv_list, false);
+            break;
+
+        case FORMATTER_TS_DATETIME_AMPM:
+            success = timestamp_datetime(kv_list, true);
+            break;
+
+        default:
+            log_error("Unexpected TS mode encountered: %d\n", f->ts_mode);
+            return;
+    }
+
+    if (!success) {
+        log_error("Failed to timestamp message.\n");
+    }
+}
 
 bool formatter_data_to_keyval(const struct formatter *f,
                               const uint8_t *data, struct keyval_list *kv_list)
@@ -611,6 +720,8 @@ bool formatter_data_to_keyval(const struct formatter *f,
     char buf[80];
     bool success = true;
     struct keyval kv;
+
+    timestamp(f, kv_list);
 
     for (i = 0; i < f->num_fields && success; i++) {
         const spt value = get_field_value(&f->fields[i], data);
@@ -761,6 +872,23 @@ enum formatter_fmt formatter_fmt_value(const char *str)
         return FORMATTER_FMT_ENUM;
     } else {
         return FORMATTER_FMT_INVALID;
+    }
+}
+
+enum formatter_ts_mode formatter_ts_mode_value(const char *str)
+{
+    if (!strcasecmp("none", str)) {
+        return FORMATTER_TS_NONE;
+    } else if (!strcasecmp("unix", str)) {
+        return FORMATTER_TS_UNIX_INT;
+    } else if (!strcasecmp("unix-frac", str)) {
+        return FORMATTER_TS_UNIX_FRAC;
+    } else if (!strcasecmp("datetime-24", str)) {
+        return FORMATTER_TS_DATETIME_24;
+    } else if (!strcasecmp("datetime-ampm", str)) {
+        return FORMATTER_TS_DATETIME_AMPM;
+    } else {
+        return FORMATTER_TS_INVALID;
     }
 }
 
