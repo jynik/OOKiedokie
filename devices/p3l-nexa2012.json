@@ -172,5 +172,7 @@
             "endianness":   "big",
             "format":       "hex"
         }
-    ]
+    ],
+
+    "ts_mode": "unix-frac"
 }}
