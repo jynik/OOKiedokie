@@ -171,6 +171,10 @@ FILE * find_file(const char *open_mode,
 
         log_debug("Searching for: %s\n", path.buf);
         f = fopen(path.buf, open_mode);
+
+        if (f) {
+            log_debug("Opened %s\n", path.buf);
+        }
     }
 
 out:
