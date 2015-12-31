@@ -72,6 +72,7 @@
 /* Other */
 #define OPTION_VERBOSITY        'v'
 #define OPTION_HELP             'h'
+#define OPTION_VERSION          0x250
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
@@ -118,6 +119,7 @@ static const struct option long_options[] = {
 
     { "verbosity",              required_argument,  0,  OPTION_VERBOSITY },
     { "help",                   no_argument,        0,  OPTION_HELP },
+    { "version",                no_argument,        0,  OPTION_VERSION },
 
     { 0,                        0,                  0,  0 }
 };
@@ -279,11 +281,15 @@ static int validate_cfg(struct ookiedokie_cfg *cfg)
     return status;
 }
 
+#define CMDLINE_ERROR   (-1)
+#define CMDLINE_HELP    1
+#define CMDLINE_VERSION 2
+
 static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
 {
     int c;
     bool ok;
-    int status = 0;
+    int status;
 
     while ((c = getopt_long(argc, argv, OPTIONS, long_options, NULL)) >= 0) {
         switch (c) {
@@ -291,19 +297,19 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
                 if (cfg->direction == DIRECTION_TX) {
                     fprintf(stderr, "Error: --rx and --tx may not be specified "
                                     "together.\n");
-                    return -1;
+                    return CMDLINE_ERROR;
                 } else {
                     cfg->direction = DIRECTION_RX;
                 }
 
                 if (cfg->sdr_type != NULL) {
                     fprintf(stderr, "Error: --rx already specified.\n");
-                    return -1;
+                    return CMDLINE_ERROR;
                 } else {
                     cfg->sdr_type = strdup(optarg);
                     if (!cfg->sdr_type) {
                         perror("strdup");
-                        return -1;
+                        return CMDLINE_ERROR;
                     }
                 }
                 break;
@@ -312,19 +318,19 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
                 if (cfg->direction == DIRECTION_RX) {
                     fprintf(stderr, "Error: --rx and --tx may not be specified "
                                     "together.\n");
-                    return -1;
+                    return CMDLINE_ERROR;
                 } else {
                     cfg->direction = DIRECTION_TX;
                 }
 
                 if (cfg->sdr_type != NULL) {
                     fprintf(stderr, "Error: --tx already specified.\n");
-                    return -1;
+                    return CMDLINE_ERROR;
                 } else {
                     cfg->sdr_type = strdup(optarg);
                     if (!cfg->sdr_type) {
                         perror("strdup");
-                        return -1;
+                        return CMDLINE_ERROR;
                     }
                 }
 
@@ -333,12 +339,12 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
             case OPTION_DEVICE:
                 if (cfg->device) {
                     fprintf(stderr, "Error: device already specified.\n");
-                    return -1;
+                    return CMDLINE_ERROR;
                 } else {
                     cfg->device = strdup(optarg);
                     if (!cfg->device) {
                         perror("strdup");
-                        return -1;
+                        return CMDLINE_ERROR;
                     }
                 }
                 break;
@@ -347,7 +353,7 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
                 cfg->tx_delay_us = str2uint(optarg, 0, UINT_MAX, &ok);
                 if (!ok) {
                     fprintf(stderr, "Invalid TX delay value: %s\n", optarg);
-                    return -1;
+                    return CMDLINE_ERROR;
                 }
                 break;
 
@@ -355,21 +361,21 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
                 cfg->tx_count = str2uint(optarg, 1, UINT_MAX, &ok);
                 if (!ok) {
                     fprintf(stderr, "Invalid tx count: %s\n", optarg);
-                    return -1;
+                    return CMDLINE_ERROR;
                 }
                 break;
 
             case OPTION_TX_PARAM:
                 status = append_device_param(cfg, optarg);
                 if (status != 0) {
-                    return status;
+                    return CMDLINE_ERROR;
                 }
                 break;
 
             case OPTION_RX_FMT:
                 if (cfg->rx_fmt != RX_FMT_INVALID) {
                     fprintf(stderr, "Error: --rx-fmt already specified.\n");
-                    return -1;
+                    return CMDLINE_ERROR;
                 }
 
                 if (!strcasecmp(optarg, "pretty")) {
@@ -378,7 +384,7 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
                     cfg->rx_fmt = RX_FMT_CSV;
                 } else {
                     fprintf(stderr, "Invalid RX output format: %s\n", optarg);
-                    return -1;
+                    return CMDLINE_ERROR;
                 }
                 break;
 
@@ -386,14 +392,14 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
                 cfg->rx_threshold = (float) str2double(optarg, 0.0f, 1.0f, &ok);
                 if (!ok) {
                     fprintf(stderr, "Invalid RX threshold: %s\n", optarg);
-                    return -1;
+                    return CMDLINE_ERROR;
                 }
                 break;
 
             case OPTION_RX_RECORD:
                 status = get_rx_recorder(cfg, optarg);
                 if (status != 0) {
-                    return status;
+                    return CMDLINE_ERROR;
                 }
                 break;
 
@@ -404,14 +410,14 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
             case OPTION_RX_FILTER:
                 if (cfg->rx_filter != NULL) {
                     fprintf(stderr, "Error: RX filter already specified.\n");
-                    return -1;
+                    return CMDLINE_ERROR;
                 } else if (!strcasecmp("none", optarg)) {
                     cfg->rx_filter = DISABLE_FILTER;
                 } else {
                     cfg->rx_filter = strdup(optarg);
                     if (!cfg->rx_filter) {
                         perror("strdup");
-                        return -1;
+                        return CMDLINE_ERROR;
                     }
                 }
                 break;
@@ -419,12 +425,12 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
             case OPTION_RX_RECORD_DIG:
                 if (cfg->rx_rec_dig != NULL) {
                     fprintf(stderr, "Error: RX digtial output file already specified.\n");
-                    return -1;
+                    return CMDLINE_ERROR;
                 } else {
                     cfg->rx_rec_dig = strdup(optarg);
                     if (!cfg->rx_rec_dig) {
                         perror("strdup");
-                        return -1;
+                        return CMDLINE_ERROR;
                     }
                 }
                 break;
@@ -432,27 +438,30 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
             case OPTION_SDR_ARGS:
                 if (cfg->sdr_args != NULL) {
                     fprintf(stderr, "Error: SDR args were already specified.\n");
-                    return -1;
+                    return CMDLINE_ERROR;
                 } else {
                     cfg->sdr_args  = strdup(optarg);
                     if (!cfg->sdr_args) {
                         perror("strdup");
-                        return -1;
+                        return CMDLINE_ERROR;
                     }
                 }
                 break;
 
             case OPTION_HELP:
-                return 1;
-                break;
+                return CMDLINE_HELP;
 
             case OPTION_VERBOSITY:
                 cfg->verbosity = str2loglevel(optarg, &ok);
                 if (!ok) {
                     fprintf(stderr, "Invalid verbosity level: %s\n", optarg);
-                    return -1;
+                    return CMDLINE_ERROR;
                 }
                 break;
+
+            case OPTION_VERSION:
+                printf("%s\n", OOKIEDOKIE_VERSION);
+                return CMDLINE_VERSION;
 
             case OPTION_FREQUENCY:
                 cfg->frequency =
@@ -464,7 +473,7 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
 
                 if (!ok) {
                     fprintf(stderr, "Invalid frequency: %s\n", optarg);
-                    return -1;
+                    return CMDLINE_ERROR;
                 }
                 break;
 
@@ -477,7 +486,7 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
                                     &ok);
                 if (!ok) {
                     fprintf(stderr, "Invalid sample rate: %s\n", optarg);
-                    return -1;
+                    return CMDLINE_ERROR;
                 }
                 break;
 
@@ -490,7 +499,7 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
                                     &ok);
                 if (!ok) {
                     fprintf(stderr, "Invalid bandwidth: %s\n", optarg);
-                    return -1;
+                    return CMDLINE_ERROR;
                 }
                 break;
 
@@ -498,7 +507,7 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
                 cfg->gain = str2int(optarg, -100, 100, &ok);
                 if (!ok) {
                     fprintf(stderr, "Invalid gain: %s\n", optarg);
-                    return -1;
+                    return CMDLINE_ERROR;
                 }
                 break;
 
@@ -506,7 +515,7 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
                 cfg->num_buffers = str2uint(optarg, 1, UINT_MAX, &ok);
                 if (!ok) {
                     fprintf(stderr, "Invalid buffer count: %s\n", optarg);
-                    return -1;
+                    return CMDLINE_ERROR;
                 }
                 break;
 
@@ -515,7 +524,7 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
                 if (!ok) {
                     fprintf(stderr, "Invalid buffer size (in samples): %s\n",
                             optarg);
-                    return -1;
+                    return CMDLINE_ERROR;
                 }
                 break;
 
@@ -524,7 +533,7 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
 
                 if (!ok) {
                     fprintf(stderr, "Invalid transfer count: %s\n", optarg);
-                    return -1;
+                    return CMDLINE_ERROR;
                 }
                 break;
 
@@ -532,7 +541,7 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
                 cfg->stream_timeout_ms = str2uint(optarg, 0, UINT_MAX, &ok);
                 if (!ok) {
                     fprintf(stderr, "Invalid stream timeout: %s\n", optarg);
-                    return -1;
+                    return CMDLINE_ERROR;
                 }
                 break;
 
@@ -540,12 +549,12 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
                 cfg->sync_timeout_ms = str2uint(optarg, 0, UINT_MAX, &ok);
                 if (!ok) {
                     fprintf(stderr, "Invalid sync function timeout: %s\n", optarg);
-                    return -1;
+                    return CMDLINE_ERROR;
                 }
                 break;
 
             default:
-                return -1;
+                return CMDLINE_ERROR;
         }
 
     }
@@ -555,7 +564,7 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
         cfg->rx_fmt = RX_FMT_PRETTY;
     }
 
-    return status;
+    return 0;
 }
 
 int main(int argc, char *argv[])
@@ -571,12 +580,19 @@ int main(int argc, char *argv[])
 
     /* Override defaults with command-line arguments */
     status = process_cmdline(argc, argv, &cfg);
-    if (status == 1) {
-        usage(argv[0]);
-        return 0;
-    } else if (status != 0) {
-        /* We got some bad arguments */
-        return status;
+    switch (status) {
+        case 0:
+            break;
+
+        case CMDLINE_HELP:
+            usage(argv[0]);
+            return 0;
+
+        case CMDLINE_VERSION:
+            return 0;
+
+        default:
+            return status;
     }
 
     status = validate_cfg(&cfg);
