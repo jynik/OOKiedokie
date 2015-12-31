@@ -139,7 +139,7 @@
             "start_bit":    14,
             "end_bit":      15,
             "endianness":   "big",
-            "format":       "two's complement",
+            "format":       "unsigned decimal",
             "offset":       1
         },
 
