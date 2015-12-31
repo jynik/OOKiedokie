@@ -1,0 +1,35 @@
+================================================================================
+ OOKiedokie Change Log Summary
+
+ For more information, please see the git log and issue tracker hosted on
+ GitHub: https://github.com/jynik/OOKiedokie
+================================================================================
+
+--------------------------------------------------------------------------------
+ v0.2.0 (2015-12-30)
+--------------------------------------------------------------------------------
+
+New Features:
+    * Added `--rx-fmt` command line option to change output message format.
+    * Added `ts_mode` device specification variable to allow RX'd messages to
+        be timestamped
+    * Added `--version` command line argument
+
+Fixes:
+    * Fixed format of p3l-nexa2012 `Channel` field.
+
+
+--------------------------------------------------------------------------------
+ v0.1.0 (2015-11-29)
+--------------------------------------------------------------------------------
+
+Initial development version.
+
+Supported SDR and file formats:
+    * bladeRF
+    * bladeRF SC16Q11
+
+Supported devices:
+    * p3l-nexa2012
+    * unknown-remote1
+

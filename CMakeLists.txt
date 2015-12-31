@@ -21,10 +21,11 @@ set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "Build type")
 ################################################################################
 
 set(VERSION_INFO_MAJOR  0)
-set(VERSION_INFO_MINOR  1)
+set(VERSION_INFO_MINOR  2)
 set(VERSION_INFO_PATCH  0)
+set(RELEASE TRUE)
 
-if(NOT DEFINED VERSION_INFO_EXTRA)
+if(NOT DEFINED VERSION_INFO_EXTRA AND NOT RELEASE)
     set(VERSION_INFO_EXTRA "git")
 endif()
 include(Version)
