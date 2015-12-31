@@ -24,7 +24,7 @@
 #include "ookiedokie_cfg.h"
 #include "keyval_list.h"
 
-#define DEFAULT_THRESHOLD   0.1f
+#define DEFAULT_THRESHOLD           0.1f
 #define DEFAULT_TX_DELAY_US         4000
 #define DEFAULT_TX_COUNT            1
 #define DEFAULT_FREQ                433920000
@@ -72,6 +72,7 @@ int ookiedokie_cfg_init(struct ookiedokie_cfg *c)
     c->device = NULL;
 
     /* Receive items */
+    c->rx_fmt = RX_FMT_INVALID;
     c->rx_threshold = DEFAULT_THRESHOLD;
     c->rx_rec_type = NULL;
     c->rx_rec_filename = NULL;

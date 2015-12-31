@@ -53,6 +53,7 @@
 #define OPTION_RX_RECORD_INPUT  0x80
 #define OPTION_RX_RECORD_DIG    'B'
 #define OPTION_RX_FILTER        'F'
+#define OPTION_RX_FMT           0x81
 
 /* SDR config */
 #define OPTION_SDR_ARGS         'A'
@@ -100,6 +101,7 @@ static const struct option long_options[] = {
     { "rx-rec-input",           no_argument,        0,  OPTION_RX_RECORD_INPUT },
     { "rx-rec-dig",             required_argument,  0,  OPTION_RX_RECORD_DIG },
     { "rx-filter",              required_argument,  0,  OPTION_RX_FILTER },
+    { "rx-fmt",                 required_argument,  0,  OPTION_RX_FMT },
 
     { "sdr-args",               required_argument,  0,  OPTION_SDR_ARGS },
     { "frequency",              required_argument,  0,  OPTION_FREQUENCY },
@@ -139,21 +141,22 @@ static void usage(const char *argv0)
     printf("\n");
     printf("Receive options:\n");
     printf("  -T, --rx-threshold <value>    On/Off threshold. Range is 0.0 to 1.0.\n");
-    printf("                                Default value: 0.1\n");
+    printf("                                  Default value: 0.1\n");
     printf("  -F, --rx-filter <filename>    Use the specified filter. This may be\n");
-    printf("                                the full path or just name for filter files\n");
-    printf("                                in the OOKiedokie search path.\n");
+    printf("                                  the full path or just name for filter files\n");
+    printf("                                  in the OOKiedokie search path.\n");
     printf("  -B, --rx-rec-dig <filename>   Save digital signal to a CSV of binary values,\n");
-    printf("                                as specified by <filename>.\n");
+    printf("                                  as specified by <filename>.\n");
     printf("  -R, --rx-rec [SDR type,]<file>\n");
     printf("                                Record RX'd samples to specified file.\n");
-    printf("                                [SDR type], which must be one of the available\n");
-    printf("                                file-based implementations, may be specified to\n");
-    printf("                                record samples using a format different from the\n");
-    printf("                                defaults of the device specified via --rx.\n");
-    printf("\n");
+    printf("                                  [SDR type], which must be one of the available\n");
+    printf("                                  file-based implementations, may be specified\n");
+    printf("                                  to record samples using a format different\n");
+    printf("                                  from that of the SDR specified by --rx.\n");
     printf("  --rx-rec-input                Specifies that --rx-rec should record raw input\n");
-    printf("                                rather than filtered samples.\n");
+    printf("                                  rather than filtered samples.\n");
+    printf("  --rx-fmt <fmt>                Configures how RX'd messages are formatted.\n");
+    printf("                                  Options are: \"csv\" and \"pretty\" (default)\n");
     printf("\n");
     printf("SDR configuration options:\n");
     printf("  -A, --sdr-args <args>         SDR-specific arguments.\n");
@@ -363,6 +366,22 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
                 }
                 break;
 
+            case OPTION_RX_FMT:
+                if (cfg->rx_fmt != RX_FMT_INVALID) {
+                    fprintf(stderr, "Error: --rx-fmt already specified.\n");
+                    return -1;
+                }
+
+                if (!strcasecmp(optarg, "pretty")) {
+                    cfg->rx_fmt = RX_FMT_PRETTY;
+                } else if (!strcasecmp(optarg, "csv")) {
+                    cfg->rx_fmt = RX_FMT_CSV;
+                } else {
+                    fprintf(stderr, "Invalid RX output format: %s\n", optarg);
+                    return -1;
+                }
+                break;
+
             case OPTION_RX_THRESHOLD:
                 cfg->rx_threshold = (float) str2double(optarg, 0.0f, 1.0f, &ok);
                 if (!ok) {
@@ -529,6 +548,11 @@ static int process_cmdline(int argc, char *argv[], struct ookiedokie_cfg *cfg)
                 return -1;
         }
 
+    }
+
+    /* Fallback defaults */
+    if (cfg->rx_fmt == RX_FMT_INVALID) {
+        cfg->rx_fmt = RX_FMT_PRETTY;
     }
 
     return status;

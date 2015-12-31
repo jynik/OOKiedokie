@@ -105,7 +105,11 @@ bool keyval_list_append(struct keyval_list *list, const struct keyval *kv)
 }
 
 size_t keyval_list_size(const struct keyval_list *list) {
-    return list->size;
+    if (list != NULL) {
+        return list->size;
+    } else {
+        return 0;
+    }
 }
 
 const struct keyval * keyval_list_at(const struct keyval_list *list, size_t idx)

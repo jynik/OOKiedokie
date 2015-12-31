@@ -178,6 +178,47 @@ static inline void threshold(struct rx *rx, float threshold,
     }
 }
 
+static void rx_print(enum ookiedokie_rx_fmt fmt, bool *first_print,
+                     const struct keyval_list *kv_list, size_t len)
+{
+    size_t i;
+
+    switch (fmt) {
+        case RX_FMT_CSV:
+
+            /* Print the field headings on the first print */
+            if (*first_print) {
+                for (i = 0; i < len; i++) {
+                    const struct keyval *kv = keyval_list_at(kv_list, i);
+                    const char sep = (i < (len - 1)) ? ',' : '\n';
+                    printf("%s%c", kv->key, sep);
+                }
+
+                *first_print = false;
+            }
+
+            /* Print the values on the rest */
+            for (i = 0; i < len; i++) {
+                const struct keyval *kv = keyval_list_at(kv_list, i);
+                const char sep = (i < (len - 1)) ? ',' : '\n';
+                printf("%s%c", kv->value, sep);
+            }
+            break;
+
+        case RX_FMT_PRETTY:
+            for (i = 0; i < len; i++) {
+                const struct keyval *kv = keyval_list_at(kv_list, i);
+                printf("%20s : %s\n", kv->key, kv->value);
+            }
+
+            putchar('\n');
+            break;
+
+        default:
+            log_error("Invalid output format: %d\n", fmt);
+    }
+}
+
 int ookiedokie_rx(struct sdr *sdr, struct fir_filter *filter,
                   struct device *device, struct sdr *recorder,
                   const struct ookiedokie_cfg *cfg)
@@ -186,6 +227,7 @@ int ookiedokie_rx(struct sdr *sdr, struct fir_filter *filter,
     struct rx *rx;
     const struct keyval_list *values;
     const unsigned int num_samples = cfg->samples_per_buffer;
+    bool first_print = true;
 
     rx = rx_init(sdr, filter, device, cfg);
     if (!rx) {
@@ -236,15 +278,12 @@ int ookiedokie_rx(struct sdr *sdr, struct fir_filter *filter,
         }
 
         if (device) {
-            values = device_process(device, rx->dig.samples, count);
-            if (values && keyval_list_size(values) != 0) {
-                size_t i;
-                for (i = 0; i < keyval_list_size(values); i++) {
-                    const struct keyval *kv = keyval_list_at(values, i);
-                    printf("%20s: %s\n", kv->key, kv->value);
-                }
+            size_t num_values;
 
-                putchar('\n');
+            values = device_process(device, rx->dig.samples, count);
+            num_values = keyval_list_size(values);
+            if (num_values != 0) {
+                rx_print(cfg->rx_fmt, &first_print, values, num_values);
             }
         }
 

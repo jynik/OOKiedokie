@@ -36,6 +36,15 @@ enum ookiedokie_dir {
 };
 
 /**
+ * RX output format mode
+ */
+enum ookiedokie_rx_fmt {
+    RX_FMT_INVALID = -1,    /**< Denotes invalid selection */
+    RX_FMT_PRETTY,          /**< Pretty-print of field and values */
+    RX_FMT_CSV,             /**< Output in CSV format */
+};
+
+/**
  * Runtime configuration parameters
  */
 struct ookiedokie_cfg {
@@ -60,6 +69,7 @@ struct ookiedokie_cfg {
     struct keyval_list *device_params; /**< Message field parameters */
 
     /* Receive options */
+    enum ookiedokie_rx_fmt rx_fmt;  /**< How to display received messages */
     float rx_threshold;             /**< RX sample magnitude threshold */
     const char *rx_rec_filename;    /**< Filename to record samples to */
     const char *rx_rec_type;        /**< File format type to record with */

@@ -70,7 +70,9 @@ bool keyval_list_append(struct keyval_list *list, const struct keyval *kv);
 /**
  * Get the current list size
  *
- * @return list size, in elements
+ * @param   list    List to check
+ *
+ * @return list size, in elements. 0 is returned if list is NULL.
  */
 size_t keyval_list_size(const struct keyval_list *list);
 
